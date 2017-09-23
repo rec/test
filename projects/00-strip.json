@@ -1,0 +1,44 @@
+{
+    "animation": {
+        "typename": "sequence",
+        "animations": [
+            {
+                "animation": "BiblioPixelAnimations.strip.Alternates.Alternates",
+                "run": {
+                    "seconds": 0.5,
+                    "fps": 30
+                }
+            },
+            {
+                "animation": "BiblioPixelAnimations.strip.BinaryEpochClock.BEClock",
+                "run": {
+                    "seconds": 0.5,
+                    "fps": 30
+                }
+            },
+            {
+                "animation": "BiblioPixelAnimations.strip.ColorChase.ColorChase",
+                "run": {
+                    "seconds": 0.5,
+                    "fps": 30
+                }
+            },
+            {
+                "animation": "BiblioPixelAnimations.strip.ColorFade.ColorFade",
+                "run": {
+                    "seconds": 0.5,
+                    "fps": 30
+                }
+            }
+        ]
+    },
+    "driver": {
+        "num": 50,
+        "typename": "simpixel"
+    },
+    "layout": "strip",
+
+    "run": {
+        "seconds": 2
+    }
+}
