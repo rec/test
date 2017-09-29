@@ -19,10 +19,7 @@ for item in domainfiles:
     with open(fullpath) as file_object:
         lines = file_object.readlines()
 
-    for line in lines:
-        if any(ts in line for ts in TEST_STRINGS):
-            break
-    else:
+    if not any(any(ts in line for ts in TEST_STRINGS) for line in lines):
         inactive_domains.append(item)
 
 print("This is a list of inactive domains")
