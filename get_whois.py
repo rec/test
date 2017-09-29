@@ -1,4 +1,6 @@
-import os, subprocess
+#!/usr/bin/env python
+
+import os, sys, subprocess
 
 
 def get_names(filename='domain-names.txt'):
@@ -18,7 +20,9 @@ def call(*args):
 
 def get_whois(name):
     output, err, exit_code = call('/usr/bin/whois', name)
-    return err + output if exit_code else output
+    if not exit_code:
+        return output
+    print('FAILED to read', name, exit_code, err, file=sys.stderr)
 
 
 def get_files(directory, names):
@@ -26,8 +30,10 @@ def get_files(directory, names):
     for name in names:
         filename = os.path.join(directory, name)
         with open(filename, 'wb') as fp:
-            fp.write(get_whois(name))
-        print('written', name)
+            whois = get_whois(name)
+            if whois:
+                fp.write(whois)
+                print('written', name)
 
 
 if __name__ == '__main__':
