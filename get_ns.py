@@ -1,5 +1,6 @@
 from os import listdir
 from os.path import isfile, join
+
 path = "/net/u/1/j/jongiles/scripts/domains/names"
 test_string1 = "Name server"
 test_string2 = "name server"
@@ -10,12 +11,15 @@ inactive_domains = []
 
 domainfiles = [f for f in listdir(path) if isfile(join(path, f))]
 ##    print (domainfiles)
+
 for item in domainfiles:
     no_nameserver = 'False'
     print(item)
+
     fullpath = join(path,item)
     with open(fullpath) as file_object:
         lines = file_object.readlines()
+
     for line in lines:
         line = line.strip()
         if test_string1 in line:
