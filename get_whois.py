@@ -12,7 +12,8 @@ def get_names(filename='domain-names.txt'):
 
 
 def call(*args):
-    process = subprocess.Popen(args, stdout=subprocess.PIPE)
+    process = subprocess.Popen(
+        args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     output, err = process.communicate()
     exit_code = process.wait()
     return output, err, exit_code
