@@ -12,8 +12,7 @@ def get_names(filename='domain-names.txt'):
 
 
 def call(*args):
-    process = subprocess.Popen(
-        args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    process = subprocess.Popen(args, stdout=subprocess.PIPE)
     output, err = process.communicate()
     exit_code = process.wait()
     return output, err, exit_code
@@ -21,9 +20,9 @@ def call(*args):
 
 def get_whois(name):
     output, err, exit_code = call('/usr/bin/whois', name)
-    if not exit_code:
-        return output
-    print('FAILED to read', name, exit_code, err, file=sys.stderr)
+    if exit_code:
+        print('FAILED to read', name, exit_code, err, file=sys.stderr)
+    return output
 
 
 def get_files(directory, names):
