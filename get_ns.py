@@ -13,7 +13,7 @@ domainfiles = [f for f in listdir(path) if isfile(join(path, f))]
 ##    print (domainfiles)
 
 for item in domainfiles:
-    no_nameserver = 'False'
+    has_nameserver = True
     print(item)
 
     fullpath = join(path,item)
@@ -32,9 +32,9 @@ for item in domainfiles:
             print(line)
             break
         else:
-            no_nameserver = 'True'
+            has_nameserver = False
 
-    if no_nameserver == 'True' :
+    if not has_nameserver:
         inactive_domains.append(item)
 
 print("This is a list of inactive domains")
