@@ -1,5 +1,4 @@
-from os import listdir
-from os.path import isfile, join
+import os
 
 path = "/net/u/1/j/jongiles/scripts/domains/names"
 
@@ -15,11 +14,13 @@ def is_active_line(line):
 
 
 def is_active_file(path, item):
-    fp = open(join(path, item))
+    fp = open(os.path.join(path, item))
     return any(is_active_file(line) for line in fp)
 
 
-domainfiles = [f for f in listdir(path) if isfile(join(path, f))]
+domainfiles = [f for f in os.listdir(path)
+               if os.path.isfile(os.path.join(path, f))]
+
 for item in domainfiles:
     print(item)
 
