@@ -8,18 +8,22 @@ TEST_STRINGS = "Name server", "name server", "Name Server"
 active_domains = []
 inactive_domains = []
 
-domainfiles = [f for f in listdir(path) if isfile(join(path, f))]
-##    print (domainfiles)
+def is_active_line(line):
+    """Return true if the line of the file indicates that the domain is active.
+    """
+    return any(ts in line for ts in TEST_STRINGS)
 
+
+def is_active_file(path, item):
+    fp = open(join(path, item))
+    return any(is_active_file(line) for line in fp)
+
+
+domainfiles = [f for f in listdir(path) if isfile(join(path, f))]
 for item in domainfiles:
     print(item)
 
-    fullpath = join(path,item)
-
-    with open(fullpath) as file_object:
-        lines = file_object.readlines()
-
-    if not any(any(ts in line for ts in TEST_STRINGS) for line in lines):
+    if not if_active_file(path, item):
         inactive_domains.append(item)
 
 print("This is a list of inactive domains")
