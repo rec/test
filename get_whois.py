@@ -13,20 +13,22 @@ def call(*args):
     process = subprocess.Popen(args, stdout=subprocess.PIPE)
     output, err = process.communicate()
     exit_code = process.wait()
+    return output, err, exit_code
 
 
 def get_whois(name):
-    process = subprocess.Popen(
-        ['pip', 'install', requirement, '--upgrade'],
-        stdout=subprocess.PIPE)
-    output, err = process.communicate()
-            exit_code = process.wait()
-
+    output, err, exit_code = call('/usr/bin/whois', name)
+    return err + output if exit_code else output
 
 
 def get_files(directory, names):
-    os.makedirs(directory)
+    os.makedirs(directory, exist_ok=True)
     for name in names:
         filename = os.path.join(directory, name)
-        with open(filename, 'w') as fp:
+        with open(filename, 'wb') as fp:
             fp.write(get_whois(name))
+        print('written', name)
+
+
+if __name__ == '__main__':
+    get_files('names', get_names())
