@@ -12,7 +12,7 @@ def is_active_line(line):
 
 
 def is_active_domain(f):
-    return any(is_active_file(line) for line in open(f))
+    return any(is_active_line(line) for line in open(f))
 
 
 directory = [os.path.join(path, f) for f in os.listdir(path)]
