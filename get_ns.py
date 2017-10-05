@@ -8,11 +8,11 @@ active_domains = []
 def is_active_line(line):
     """Return true if the line of the file indicates that the domain is active.
     """
-    return any(ts in line for ts in TEST_STRINGS)
+    return any(ts in line.decode() for ts in TEST_STRINGS)
 
 
 def is_active_domain(f):
-    return any(is_active_line(line) for line in open(f))
+    return any(is_active_line(line) for line in open(f, 'rb'))
 
 
 directory = [os.path.join(path, f) for f in os.listdir(path)]
