@@ -12,6 +12,10 @@ class Bar:
     def foo(bar, baz):
         return foo
 
+class Bang:
+    Bing = Bar
+
 
 bar = Bar()
 print(bar.baz(1))
+print(Bang.Bing)
