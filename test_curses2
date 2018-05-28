@@ -1,0 +1,26 @@
+#!/usr/bin/env python3
+
+import curses
+SET_COLORS = True
+
+
+def test_curses(stdscr):
+    if SET_COLORS:
+        assert curses.can_change_color()
+        for color in range(1, 256):
+            # Any r, g, b values <= 1000 get the same result.
+            curses.init_color(color, 1000, 0, 0)
+            curses.init_pair(color, color, 0)
+
+    stdscr.clear()
+    for color in range(256):
+        y, x = divmod(color, 16)
+        color_pair = curses.color_pair(color)
+        stdscr.addch(y, 3 * x + 1, '●', color_pair)
+
+    stdscr.refresh()
+    stdscr.getkey()
+
+
+if __name__ == '__main__':
+    curses.wrapper(test_curses)

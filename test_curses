@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+
+import curses, datetime, itertools
+
+LOGFILE = '/tmp/test_curses_log.txt'
+LOGHANDLE = open(LOGFILE, 'w')
+
+
+def log(*args, **kwds):
+    print(*args, file=LOGHANDLE, **kwds)
+
+
+def rgb_to_256(r, g, b):
+    # Classic encoding: 3 bits of red, 3 bits of green, 2 bits of blue.
+    r, g, b = r // 0x20, g // 0x20, b // 0x40
+    return r + 8 * g + 64 * b
+
+
+def set_colors():
+    ratio = 1000 / 255
+    d = lambda c: int(c * ratio)
+
+    for r, g, b in itertools.product(range(8), range(8), range(4)):
+        r, g, b = r << 5, g << 5, b << 6
+        color = rgb_to_256(r, g, b)
+        if color:
+            rgb = [int(ratio * i) for i in (r, g, b)]
+            log('!!!', rgb)
+            curses.init_color(color, *rgb)
+            curses.init_pair(color, color, 0)
+            log(curses.color_content(color))
+
+
+def test_curses(stdscr):
+    set_colors()
+
+    stdscr.clear()
+    stdscr.refresh()
+    cp = rgb_to_256(255, 0, 0)
+    log('content', curses.color_content(cp))
+    for y in range(16):
+        for x in range(16):
+            c = 16 * y + x
+            stdscr.addch(y, 2 * x + 1, '●', curses.color_pair(c))
+    stdscr.getkey()
+
+
+def timestamp():
+    return datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y")
+
+
+if __name__ == '__main__':
+    log('Starting', timestamp())
+    curses.wrapper(test_curses)
+    log('Finished', timestamp())
+    log()
