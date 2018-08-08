@@ -15,5 +15,12 @@ def test2(omit=None):
     print(scrub('abc'))
 
 
+def test3():
+    for i in range(3):
+        j = i
+    print(i, j)
+
+
 test()
 test2()
+test3()
