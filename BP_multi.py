@@ -13,7 +13,7 @@ from BiblioPixelAnimations.matrix.LangtonsAnt import LangtonsAnt
 from BiblioPixelAnimations.matrix.AnalogClock import AnalogClock
 from BiblioPixelAnimations.matrix.ImageAnim import ImageAnim
 #from BiblioPixelAnimations.matrix.kimotion import Kimotion
-from bibliopixel.drivers.serial_driver import DriverTeensySmartMatrix
+from bibliopixel.drivers.serial.driver import DriverTeensySmartMatrix
 from bibliopixel import LEDMatrix
 import bibliopixel.colors as colors
 from bibliopixel import MultiMapBuilder, mapGen

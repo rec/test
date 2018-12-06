@@ -1,0 +1,10 @@
+#!/bin/bash
+
+ls frogs
+echo "one"
+
+source /development/test/set_e.sh
+echo "two"
+
+ls frogs
+echo "three"

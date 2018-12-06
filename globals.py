@@ -18,4 +18,5 @@ def glob2():
 
 
 print(GLOBAL)
+glob2()
 print(GLOBAL2)

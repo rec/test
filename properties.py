@@ -8,3 +8,8 @@ class Test:
 
     def __init__(self):
         self.baz = 'baz'
+
+    def method(self=None):
+        if self:
+            return self.foo
+        return Test.bar
