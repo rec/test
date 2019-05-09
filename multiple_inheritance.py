@@ -20,3 +20,7 @@ class Baz(Foo, Bar):
 
 
 Baz().two()
+
+# Result:
+#   Foo.__init__
+#   Foo.self Bar.self Foo.self

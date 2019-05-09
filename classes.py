@@ -7,6 +7,7 @@ class Bar:
     baz = foo
     bing = 1, 2, 3
     bong = bing
+    BOOM = 12
 
     if True:
         bop = 17
@@ -17,6 +18,11 @@ class Bar:
     @staticmethod
     def foo(bar, baz):
         return foo
+
+    def __init__(self, boom=BOOM):
+        self.boom = boom
+        self.boing = BOOM
+
 
 class Bang:
     Bing = Bar
