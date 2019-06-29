@@ -2,10 +2,13 @@ import importlib
 import sys
 
 
+
 def _import(module):
     sys_modules = dict(sys.modules)
-    importlib.import_module(module)
-    sys.modules = sys_modules
+    importlib.invalidate_caches()
+    importlib.import_module(module, package=None)
+    sys.modules.clear()
+    sys.modules.update(sys_modules)
 
 
 FAILURE = True
@@ -32,7 +35,7 @@ Traceback (most recent call last):
   File "<frozen importlib._bootstrap>", line 665, in _load_unlocked
   File "<frozen importlib._bootstrap_external>", line 678, in exec_module
   File "<frozen importlib._bootstrap>", line 219, in _call_with_frames_removed
-  File "/code/test/relative_import/extract/two.py", line 1, in <module>
+  File "/code/test/strange_import/extract/two.py", line 1, in <module>
     from . import one
 ImportError: cannot import name 'one'
 """
