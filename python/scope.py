@@ -21,6 +21,16 @@ def test3():
     print(i, j)
 
 
-test()
-test2()
-test3()
+def test4(param=1):
+    def inner(p2=2):
+        print('locals', *locals().keys())
+        print('globals', *globals().keys())
+
+    inner()
+
+if True:
+    test4()
+else:
+    test()
+    test2()
+    test3()
