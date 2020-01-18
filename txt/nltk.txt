@@ -1,0 +1,10 @@
+Go to https://github.com/nltk/nltk
+
+https://github.com/nltk/nltk/blob/develop/CONTRIBUTING.md
+cd /code
+git clone https://github.com/rec/nltk
+for each version of Python nltk supports + Python 3.8:
+  Create a new virtual env nltk-3.x, where x is the minor version number
+  pip install cython
+
+I discovered that Cython is not installed by default in 3.8!
