@@ -1,18 +1,12 @@
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass
-class InventoryItem:
-    """Class for keeping track of an item in inventory."""
-    name: str
-    "after name"
+class Parent:
+    path: str = 'one'
 
-    unit_price: float
-    "after price"
-    quantity_on_hand: int = 0
-    "after qtty"
 
-    @property
-    def total_cost(self) -> float:
-        "inside tc!"
-        return self.unit_price * self.quantity_on_hand
+@dataclass
+class Child(Parent):
+    path: str = 'two'
