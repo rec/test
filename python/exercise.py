@@ -15,6 +15,17 @@ def product(a, b):
     return result
 
 
+    def product2(a, b):
+        ax, ay = len(a[0]), len(a)
+        bx, by = len(b[0]), len(b)
+
+        assert all(len(row) == ax for row in a)
+        assert all(len(row) == bx for row in b)
+        assert ax == by
+
+        return [[sum(a[i][k] * b[k][j] for k in range(ax)) for j in range(bx)] for i in range(ay)]
+
+
 # https://www.mathsisfun.com/algebra/matrix-multiplying.html
 a = [
     [1, 2, 3],
@@ -26,3 +37,4 @@ b = [
     [11, 12]
 ]
 print(product(a, b))
+print(product2(a, b))
