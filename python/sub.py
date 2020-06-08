@@ -1,50 +1,34 @@
+from asyncio.subprocess import PIPE
 import asyncio
-from subprocess import PIPE
 
 
-async def run(shell, commands, callback, echo):
-    proc = await asyncio.create_subprocess_shell(
-        ' '.join(shell),
-        stdin=PIPE,
-        stdout=PIPE,
-        stderr=PIPE)
+async def run():
+    proc = await asyncio.create_subprocess_exec(
+        '/bin/bash', '-i', stdin=PIPE, stdout=PIPE, stderr=PIPE
+    )
 
     async def read(stream):
-        is_err = stream is proc.stderr
+        message = 'E' if stream is proc.stderr else 'O'
         while True:
             line = await stream.readline()
-            if not line:
+            if line:
+                print(message, line)
+            else:
                 break
-            callback(is_err, line.decode('utf8').rstrip('\n'))
 
-    async def write(stream):
-        for command in commands:
-            e = echo.format(command)
-            stream.write((command + '\n').encode('utf8'))
-            await stream.drain()
+    async def write():
+        # for command in (b'echo PS1=$PS1', b'ls sub.py', b'ls DOESNT-EXIST'):
+        for command in (b'PS1="hello\n"', b'ls sub.py', b'ls DOESNT-EXIST'):
+            proc.stdin.write(command + b'\n')
+            await proc.stdin.drain()
             await asyncio.sleep(0.01)
-            # TODO: sleep is wrong!  I really want to wait for the prompt
-
-        proc.terminate()
+        # proc.terminate()
 
     await asyncio.gather(
-        write(proc.stdin),
         read(proc.stderr),
         read(proc.stdout),
+        write(),
     )
 
 
-def yield_inputs():
-    while True:
-        s = input('$ ')
-        if not s:
-            break
-        yield s
-
-
-def main():
-    asyncio.run(run(('/bin/bash', '-i'), yield_inputs(), print, "echo '{}'"))
-
-
-if __name__ == '__main__':
-    main()
+asyncio.run(run())
