@@ -17,12 +17,11 @@ async def run():
                 break
 
     async def write():
-        # for command in (b'echo PS1=$PS1', b'ls sub.py', b'ls DOESNT-EXIST'):
         for command in (b'PS1="hello\n"', b'ls sub.py', b'ls DOESNT-EXIST'):
             proc.stdin.write(command + b'\n')
             await proc.stdin.drain()
             await asyncio.sleep(0.01)
-        # proc.terminate()
+        proc.terminate()
 
     await asyncio.gather(
         read(proc.stderr),
