@@ -1,4 +1,3 @@
-
 class Test:
     @property
     def foo(self):
