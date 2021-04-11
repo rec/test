@@ -20,3 +20,31 @@ class Foo:
 
 FOO = Foo()
 print(type(Foo.bar), type(FOO.bar), type(Foo.__dict__['bar']))
+
+
+get = lambda self: print('get')
+set = lambda self, x: print('set', x)
+
+
+class F1:
+    pget = property(get)
+    pset = property(None, set)
+    psetget = property(get, set)
+
+
+from dataclasses import dataclass, field
+from typing import Any, List, Optional
+
+
+@dataclass(order=True)
+class Action:
+    name: str = ''
+    _name: str = field(default="undefined", init=False, compare=True, repr=False)
+
+    @property
+    def name(self) -> str:  # pylint: disable=function-redefined
+        return self._name
+
+    @name.setter
+    def name(self, name: str) -> None:
+        self._name = name
