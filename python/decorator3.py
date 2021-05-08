@@ -5,7 +5,7 @@ class Class:
 
 ac = Class()
 
-def mock_input_decorator(func=None, **options):
+def mock_input_decorator(func=None, options=None):
     if func == None:  # Better - if func is None
         return partial(mock_input_decorator, **options)
 
