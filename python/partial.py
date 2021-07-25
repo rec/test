@@ -6,5 +6,6 @@ def f(*args, **kwds):
 
 
 g = functools.partial(f, foo=1)
+h = functools.partial(g, foo=2, bar=3)
 
-print(g(foo=2, bar=3))
+h(bar=4)
