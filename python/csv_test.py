@@ -4,9 +4,9 @@ WRITE = True
 fieldnames = 'one', 'two', 'three'
 
 if WRITE:
-    # quoting = csv.QUOTE_ALL
+    quoting = csv.QUOTE_ALL
     # quoting = csv.QUOTE_NONNUMERIC
-    quoting = csv.QUOTE_MINIMAL
+    # quoting = csv.QUOTE_MINIMAL
     w = csv.DictWriter(sys.stdout, fieldnames, quoting=quoting)
     w.writeheader()
     w.writerow({'one': None, 'two': 'None', 'three': ''})
