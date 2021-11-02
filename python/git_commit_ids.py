@@ -31,7 +31,7 @@ def _print_all():
     _print_times(time_ids)
     last_time = int(time_ids[-1][0])
 
-    for days in 365, 120, 30, 7:
+    for days in 365, 120, 30, 7, 1:
         i = bisect(time_ids, (str(last_time - DAY * days), ''))
         _print_times(time_ids[i:])
 
