@@ -4,11 +4,18 @@ LETTERS = string.ascii_uppercase
 NUMBERS = string.digits
 CHARS = string.ascii_uppercase + string.digits
 
+def count_em(word=None):
+    word = word or []
+    nc = _next_chars(word)
+    if not nc:
+        yield ''.join(word)
+    else:
+        for c in nc:
+            word.append(c)
+            yield from count_em(word)
+            word.pop()
 
 def _next_chars(word):
-    if len(word) == 6:
-        return ''
-
     letter_count = sum(i in LETTERS for i in word)
     if letter_count == 3:
         letters = ''
@@ -26,18 +33,6 @@ def _next_chars(word):
         numbers = NUMBERS
 
     return letters + numbers
-
-
-def count_em(word=None):
-    word = word or []
-    nc = _next_chars(word)
-    if not nc:
-        yield ''.join(word)
-    else:
-        for c in nc:
-            word.append(c)
-            yield from count_em(word)
-            word.pop()
 
 for word in count_em():
     print(word)
