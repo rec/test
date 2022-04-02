@@ -6,7 +6,7 @@ def count_em():
     chars = string.ascii_uppercase + string.digits
 
     for word in itertools.product(*[chars] * 6):
-        if 'K' in word and '8' in word and len(numbers.intersection(word)) == 3:
+        if 'K' in word and '8' in word and sum(i in numbers for i in word) == 3:
             # A generator is easier to debug
             # because you can just fetch a few elements.
             yield ''.join(word)
