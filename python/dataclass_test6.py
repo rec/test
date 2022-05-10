@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from functools import cached_property
 
 
-@dataclass
+@dataclass(frozen=True)
 class Data:
     one: str = 'one'
 
@@ -15,3 +15,8 @@ class Data:
         return 'three'
 
     FOUR = 'four'
+
+d = Data()
+print(d)
+print(d.two)
+print(d.three)
