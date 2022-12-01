@@ -1,9 +1,12 @@
 import subprocess
 from pathlib import Path
 
-ROOT = Path('/Users/tom/Downloads/videos/Northern Exposure')
-SRC = ROOT / 'original'
-TARGET = ROOT / 'processed'
+#ROOT = Path('/Users/tom/Downloads/videos/Northern Exposure')
+#SRC = ROOT / 'original'
+#TARGET = ROOT / 'processed'
+
+SRC = Path('/Users/tom/Downloads/Dead.to.Me.S03.COMPLETE.1080p.NF.WEB.H264-MIXED[TGx]')
+TARGET = Path('/Users/tom/Downloads/dead')
 
 
 def main(src=SRC, target=TARGET):
@@ -18,7 +21,7 @@ def main(src=SRC, target=TARGET):
                 'ffmpeg',
                 '-i', str(f),
                 '-c:v', 'h264_videotoolbox',
-                '-b:v', '3600k',
+                '-b:v', '4800k',
                 str(tf)
             )
             print('$', *cmd)
