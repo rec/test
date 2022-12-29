@@ -23,3 +23,10 @@ def hash_file(filename: str) -> str:
                 hasher.update(fp.read(10))
 
     return hasher.hexdigest()
+
+
+if __name__ == '__main__':
+    import sys
+
+    for filename in sys.argv[1:]:
+        print(filename, hash_file(filename))
