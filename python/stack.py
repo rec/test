@@ -1,3 +1,4 @@
+import inspect
 import traceback
 
 def foo():
@@ -12,6 +13,9 @@ def baz(x, y):
     frame = traceback.extract_stack()[-2]
     print(frame.filename)
     print(dir(frame))
+
+    stack = inspect.stack()
+    print(stack[0], stack[1])
 
 
 if __name__ == '__main__':
