@@ -14,8 +14,11 @@ def paged_queries(**kwargs):
 
 
 def simple_iterator():
+    print('before')
     yield 1
+    print('between')
     yield 2
+    print('after')
 
 
 def all_nodes_simple(root):
