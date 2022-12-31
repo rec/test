@@ -13,7 +13,7 @@ def paged_queries(**kwargs):
         continuation = result.continuation
 
 
-def simple_iterator():
+def simple_generator():
     print('before')
     yield 1
     print('between')
