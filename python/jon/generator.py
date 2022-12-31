@@ -32,5 +32,5 @@ def all_children_simple(root):
 def all_children(root):
     yield root
 
-    for child in root.children():
+    for child in root.direct_children():
         yield from all_children(child)
