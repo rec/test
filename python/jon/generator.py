@@ -13,6 +13,14 @@ def paged_queries(**kwargs):
         continuation = result.continuation
 
 
+def all_nodes_simple(root):
+    yield root
+
+    for child in root.children():
+        for descendent in all_nodes_simple(child):
+            yield descendent
+
+
 def all_nodes(root):
     yield root
 
