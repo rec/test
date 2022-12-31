@@ -21,16 +21,16 @@ def simple_generator():
     print('after')
 
 
-def all_nodes_simple(root):
+def all_children_simple(root):
     yield root
 
-    for child in root.children():
-        for descendent in all_nodes_simple(child):
+    for child in root.direct_children():
+        for descendent in all_children_simple(child):
             yield descendent
 
 
-def all_nodes(root):
+def all_children(root):
     yield root
 
     for child in root.children():
-        yield from all_nodes(child)
+        yield from all_children(child)
