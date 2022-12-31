@@ -1,3 +1,12 @@
+def lower_all(it):
+    for i in it:
+        yield i.lower()
+
+
+# Or just (i.lower() for i in it)
+
+
+
 def paged_queries(query):
     continuation = None
 
