@@ -1,8 +1,8 @@
-def paged_queries(**kwargs):
+def paged_queries(query):
     continuation = None
 
     while True:
-        result = API_query(**kwargs, continuation=continuation)
+        result = API_query(query, continuation=continuation)
 
         if result.empty():
             break
