@@ -2,7 +2,7 @@ def paged_queries(**kwargs):
     continuation = None
 
     while True:
-        result = jon_query(**kwargs, continuation=continuation)
+        result = API_query(**kwargs, continuation=continuation)
 
         if result.empty():
             break
@@ -24,7 +24,7 @@ def simple_generator():
 def all_children_simple(node):
     yield node
 
-    for child in jon_direct_children(node):
+    for child in API_direct_children(node):
         for descendent in all_children_simple(child):
             yield descendent
 
@@ -32,5 +32,5 @@ def all_children_simple(node):
 def all_children(node):
     yield node
 
-    for child in jon_direct_children(node):
+    for child in API_direct_children(node):
         yield from all_children(child)
