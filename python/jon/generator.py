@@ -29,8 +29,8 @@ def all_children_simple(node):
             yield descendent
 
 
-def all_children(root):
-    yield root
+def all_children(node):
+    yield node
 
-    for child in root.direct_children():
+    for child in node.direct_children():
         yield from all_children(child)
