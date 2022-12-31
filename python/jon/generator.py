@@ -16,8 +16,7 @@ def paged_queries(query):
         if result.empty():
             break
 
-        for i in result.items():
-            yield i
+        yield from result.items()
 
         continuation = result.continuation
 
