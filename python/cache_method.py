@@ -47,7 +47,6 @@ def test_fails(cls):
     assert a.count() == b.count()
 
 
-
 test_ok(Class)
 test_ok(CachedProperty)
 test_fails(Cache)
