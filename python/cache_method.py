@@ -11,6 +11,12 @@ class Class:
         return next(COUNT)
 
 
+class LruClass:
+    @functools.lru_cache(maxsize=None)
+    def count(self):
+        return next(COUNT)
+
+
 @dataclass(frozen=True)
 class CachedProperty:
     def count(self):
@@ -28,6 +34,7 @@ def test_ok(cls):
 
 
 test_ok(Class)
+test_ok(LruClass)
 test_ok(CachedProperty)
 
 
