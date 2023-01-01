@@ -21,6 +21,16 @@ class CachedProperty:
         return next(COUNT)
 
 
+def test_ok(cls):
+    a, b = cls(), cls()
+    print(f'ok:   {a.count()=} {b.count()=}')
+    assert a.count() + 1 == b.count()
+
+
+test_ok(Class)
+test_ok(CachedProperty)
+
+
 @dataclass(frozen=True)
 class Cache:
     @functools.cache
@@ -35,19 +45,11 @@ class Lru:
         return next(COUNT)
 
 
-def test_ok(cls):
-    a, b = cls(), cls()
-    print(f'ok:   {a.count()=} {b.count()=}')
-    assert a.count() + 1 == b.count()
-
-
 def test_fails(cls):
     a, b = cls(), cls()
     print(f'FAIL: {a.count()=} {b.count()=}')
     assert a.count() == b.count()
 
 
-test_ok(Class)
-test_ok(CachedProperty)
 test_fails(Cache)
 test_fails(Lru)
