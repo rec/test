@@ -12,17 +12,43 @@ class Class:
 
 
 @dataclass(frozen=True)
-class Dataclass:
+class CachedProperty:
+    def count(self):
+        return self._count
+
+    @functools.cached_property
+    def _count(self):
+        return next(COUNT)
+
+
+@dataclass(frozen=True)
+class Cache:
     @functools.cache
     def count(self):
         return next(COUNT)
 
 
-def test_cache(cls):
+@dataclass(frozen=True)
+class Lru:
+    @functools.lru_cache(maxsize=None)
+    def count(self):
+        return next(COUNT)
+
+
+def test_ok(cls):
     a, b = cls(), cls()
-    print(f'{a.count()=} {b.count()=}')
+    print(f'ok:   {a.count()=} {b.count()=}')
     assert a.count() + 1 == b.count()
 
 
-test_cache(Class)
-test_cache(Dataclass)
+def test_fails(cls):
+    a, b = cls(), cls()
+    print(f'FAIL: {a.count()=} {b.count()=}')
+    assert a.count() == b.count()
+
+
+
+test_ok(Class)
+test_ok(CachedProperty)
+test_fails(Cache)
+test_fails(Lru)
