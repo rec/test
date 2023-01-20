@@ -38,14 +38,14 @@ test_ok(LruClass)
 test_ok(CachedProperty)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class Cache:
     @functools.cache
     def count(self):
         return next(COUNT)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class Lru:
     @functools.lru_cache(maxsize=None)
     def count(self):
