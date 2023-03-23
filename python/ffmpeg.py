@@ -9,7 +9,7 @@ SRC = Path('/Users/tom/Downloads/Dead.to.Me.S03.COMPLETE.1080p.NF.WEB.H264-MIXED
 TARGET = Path('/Users/tom/Downloads/dead')
 
 
-def main(src, target, bv='4800'):
+def main(src, target, bv='4800k'):
     src, target = Path(src), Path(target)
     assert src.exists(), str(src)
     for f in sorted(t for t in src.iterdir() if t.suffix in ('.mkv', '.mp4')):
@@ -22,7 +22,7 @@ def main(src, target, bv='4800'):
             'ffmpeg',
             '-i', str(f),
             '-c:v', 'h264_videotoolbox',
-            '-b:v', f'{bv}k',
+            '-b:v', f'{bv}',
             str(tf)
         )
         print('$', *cmd)
