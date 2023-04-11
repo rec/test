@@ -21,7 +21,7 @@ class Bar:
 
     def __init__(self, boom=BOOM):
         self.boom = boom
-        self.boing = BOOM
+        self.boing = self.BOOM
 
 
 class Bang:
