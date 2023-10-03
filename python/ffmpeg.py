@@ -1,13 +1,6 @@
 import subprocess
 from pathlib import Path
 
-#ROOT = Path('/Users/tom/Downloads/videos/Northern Exposure')
-#SRC = ROOT / 'original'
-#TARGET = ROOT / 'processed'
-
-SRC = Path('/Users/tom/Downloads/Dead.to.Me.S03.COMPLETE.1080p.NF.WEB.H264-MIXED[TGx]')
-TARGET = Path('/Users/tom/Downloads/dead')
-
 
 def main(src, target, bv='4800k'):
     src, target = Path(src), Path(target)
