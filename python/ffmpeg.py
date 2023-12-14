@@ -1,30 +1,42 @@
-import subprocess
+import subprocess as sp
 from pathlib import Path
+import re
+
+KBS_RE = re.compile(r'bitrate: \s+ (\d+) \s+ kb/s', re.VERBOSE)
+BOOST_RATIO = 1.1
 
 
-def main(src, target, bv='4800k'):
+def main(src, target):
     src, target = Path(src), Path(target)
     assert src.exists(), str(src)
-    for f in sorted(t for t in src.iterdir() if t.suffix in ('.mkv', '.mp4')):
+    for f in sorted((*src.glob('**/*.mkv'), *src.glob('**/*.mp4'))):
         tf = target / f.relative_to(src).with_suffix('.mp4')
-        if False and tf.exists():
+        if tf.exists():
+            tf.unlink()
+
+        cmd = 'ffmpeg', '-i', str(f)
+        out = sp.run(cmd, text=True, stderr=sp.PIPE).stderr
+        out = ' '.join(out.splitlines())
+        m = KBS_RE.findall(out)
+
+        bvs = [int(BOOST_RATIO * int(i)) for i in m]
+        bv = sum(bvs)
+        print()
+        print(*bvs, f)
+        print()
+        if not True:
+            # print('$', *cmd)
             continue
 
-        tf.parent.mkdir(parents=True, exist_ok=True)
-        cmd = (
-            'ffmpeg',
-            '-i', str(f),
+        cmd += (
             '-c:v', 'h264_videotoolbox',
-            '-b:v', f'{bv}',
+            '-b:v', f'{bv}k',
             str(tf)
         )
-        print('$', *cmd)
-        if not True:
-            continue
-
+        tf.parent.mkdir(parents=True, exist_ok=True)
         try:
             finished = False
-            subprocess.run(cmd)
+            sp.run(cmd)
             finished = True
         finally:
             if not finished:
