@@ -9,7 +9,13 @@ BOOST_RATIO = 1.1
 def main(src, target):
     src, target = Path(src), Path(target)
     assert src.exists(), str(src)
-    for f in sorted((*src.glob('**/*.mkv'), *src.glob('**/*.mp4'))):
+    if src.suffix in ('.avi', '.mkv', '.mp4'):
+        files = [src]
+        src = src.parent
+    else:
+        files = sorted((*src.glob('**/*.mkv'), *src.glob('**/*.mp4')))
+
+    for f in files:
         tf = target / f.relative_to(src).with_suffix('.mp4')
         if tf.exists():
             tf.unlink()
