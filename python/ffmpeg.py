@@ -35,6 +35,7 @@ def main(src, target):
             continue
 
         cmd += (
+            '-acodec', 'aac',
             '-c:v', 'h264_videotoolbox',
             '-b:v', f'{bv}k',
             str(tf)
@@ -51,4 +52,8 @@ def main(src, target):
 
 if __name__ == '__main__':
     import sys
-    main(*sys.argv[1:])
+
+    *src, target = sys.argv[1:]
+
+    for s in src:
+        main(s, target)
