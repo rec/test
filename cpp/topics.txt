@@ -1,0 +1,27 @@
+* Meyers
+* <algorithms>
+* <ranges>
+* <span>
+* <tuple>
+* emplace_*
+* Install catch somewhere
+* Add to -I
+* noexcept
+* remember to add explicit
+* decltype vs decltype(auto)
+* volatile vs mutable
+* virtual destructors
+* order of construction and destruction
+* better explanation of SFINAE
+* modern replacements for that
+* calling methods on the superclass
+* new features in C++23, 20, 17, 14, 11
+* shadowing and how to avoid
+* forward declaring destructors and `std::unique_ptr`
+* value categories https://en.cppreference.com/w/cpp/language/value_category
+* declaring function pointers
+* universal references, & vs &&
+* automatically generated member methods and deleting
+* std::string
+* std::function
+* compile pytorch
