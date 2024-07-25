@@ -11,13 +11,6 @@ def standard_test(fn):
     val1a = opt_fn(*args1)
 
 
-def make_test(fn):
-    def test_fn():
-        return standard_test(fn)
-
-    return test_fn
-
-
 def test_dict_keys(x):
     d = {3: x}
     keys = d.keys()
