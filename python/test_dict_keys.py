@@ -10,7 +10,8 @@ def test_dict_keys(x):
     return 3 in keys, 4 in keys, 5 in keys, d2.keys() == keys
 
 actual = testing.CompileCounter()
+optimize = optimize_assert(actual)
 
 args1 = [torch.randn(10, 10)]
-opt_fn = optimize_assert(actual)(test_dict_keys)
+opt_fn = optimize(test_dict_keys)
 val1a = opt_fn(*args1)
