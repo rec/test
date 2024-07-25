@@ -12,6 +12,9 @@ def test_dict_keys(x):
 actual = testing.CompileCounter()
 optimize = optimize_assert(actual)
 
+if True:
+    optimize = torch._dynamo.optimize(nopython=True)
+
 args1 = [torch.randn(10, 10)]
 opt_fn = optimize(test_dict_keys)
 val1a = opt_fn(*args1)
