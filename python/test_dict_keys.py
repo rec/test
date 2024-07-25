@@ -1,5 +1,5 @@
 import torch
-from torch._dynamo import testing, eval_assert
+from torch._dynamo import testing, eval_frame
 
 def standard_test(fn):
     actual = testing.CompileCounter()
@@ -8,7 +8,7 @@ def standard_test(fn):
     args2 = [torch.randn(10, 10)]
     correct1 = fn(*args1)
     correct2 = fn(*args2)
-    opt_fn = eval_assert.optimize_assert(actual)(fn)
+    opt_fn = eval_frame.optimize_assert(actual)(fn)
     val1a = opt_fn(*args1)
     val2a = opt_fn(*args2)
     val1b = opt_fn(*args1)
