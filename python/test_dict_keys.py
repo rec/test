@@ -1,18 +1,23 @@
-import inspect
-from torch._dynamo.testing import standard_test
+import torch
+from torch._dynamo import testing, optimize_assert
+
+def standard_test(fn):
+    actual = testing.CompileCounter()
+
+    args1 = [torch.randn(10, 10)]
+    args2 = [torch.randn(10, 10)]
+    correct1 = fn(*args1)
+    correct2 = fn(*args2)
+    opt_fn = optimize_assert(actual)(fn)
+    val1a = opt_fn(*args1)
+    val2a = opt_fn(*args2)
+    val1b = opt_fn(*args1)
+    val2b = opt_fn(*args2)
 
 
 def make_test(fn):
-    if fn is None:
-        return lambda fn: make_test(fn, expected_frame_count=expected_frame_count)
-
     def test_fn():
-        return standard_test(
-            None,
-            fn=fn,
-            nargs=1,
-            expected_frame_count=1,
-        )
+        return standard_test(fn)
 
     return test_fn
 
