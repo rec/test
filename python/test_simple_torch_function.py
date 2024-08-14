@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 @torch._dynamo.optimize(nopython=True)
 def simple_function(x):
-    return F.sigmoid(x)
+    return x.sigmoid()
 
 
 class TensorProxy(torch.Tensor):

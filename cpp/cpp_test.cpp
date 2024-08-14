@@ -12,7 +12,7 @@ int main() {
   auto t1 = torch::zeros(size), t2 = torch::zeros(size), t3 = torch::zeros(size);
 
   at::TensorList out{t1, t2, t3};
-  if (!false) {
+  if (false) {
       at::unbind_copy_out(out, tensor);
   } else {
       at::_ops::unbind_copy_int_out::call(tensor, 0, out);
