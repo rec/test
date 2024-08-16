@@ -1,0 +1,16 @@
+#!/bin/bash
+
+RUN="python /home/rec/code/test/python/test_various_torch_functions.py"
+
+rm -Rf torch_compile_debug
+
+export TEST_ALLOW_BREAKS=1
+export TEST_COMPILE=1
+export TORCH_COMPILE_DEBUG=1
+
+$RUN
+TEST_TORCH_FUNCTION=1 $RUN
+TEST_TWO_SIGS=1 $RUN
+TEST_TORCH_FUNCTION=1 TEST_TWO_SIGS=1 $RUN
+TEST_LATE_SUBCLASS=1 TEST_NO_SUBCLASS=1 $RUN
+TEST_LATE_SUBCLASS=1 TEST_NO_SUBCLASS=1 TEST_TWO_SIGS=1 $RUN

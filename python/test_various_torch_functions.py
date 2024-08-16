@@ -27,12 +27,12 @@ class TensorSubclass(torch.Tensor):
 if LATE_SUBCLASS:
     if TWO_SIGS:
         def simple_function(x):
-            x = TensorSubclass(x)
+            x = x.as_subclass(TensorSubclass)
             x = x.sigmoid()
             return x.sigmoid()
     else:
         def simple_function(x):
-            x = TensorSubclass(x)
+            x = x.as_subclass(TensorSubclass)
             return x.sigmoid()
 
 else:
