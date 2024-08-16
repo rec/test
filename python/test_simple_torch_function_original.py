@@ -8,9 +8,8 @@ def simple_function(x):
 
 
 class TensorProxy(torch.Tensor):
-    @classmethod
-    def __torch_function__(cls, func, types, args=(), kwargs=None):
-        return super().__torch_function__(func, types, args, kwargs)
+    pass
+
 
 torch._dynamo.config.traceable_tensor_subclasses.add(TensorProxy)
 proxy = torch.randn(1).as_subclass(TensorProxy)
