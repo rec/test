@@ -35,8 +35,8 @@ def is_anagram_long(s: str, t: str) -> bool:
 import timeit
 
 def time(fn):
-    print(timeit.timeit(lambda: fn('stressed', 'desserts'), number=10000))
+    return timeit.timeit(lambda: fn('stressed', 'desserts'), number=10000)
 
 
-time(is_anagram_long)
-time(is_anagram_short)
+print('long names', time(is_anagram_long))
+print('short names', time(is_anagram_short))
