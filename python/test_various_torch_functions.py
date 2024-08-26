@@ -7,7 +7,6 @@ def env(name):
     return int(os.environ.get('TEST_' + name, '0'))
 
 
-COMPILE = env('COMPILE')
 LATE_SUBCLASS = env('LATE_SUBCLASS')
 NO_SUBCLASS = env('NO_SUBCLASS')
 TWO_SIGS = env('TWO_SIGS')

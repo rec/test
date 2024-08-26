@@ -12,5 +12,5 @@ class TensorProxy(torch.Tensor):
 
 
 torch._dynamo.config.traceable_tensor_subclasses.add(TensorProxy)
-proxy = torch.randn(1).as_subclass(TensorProxy)
+proxy = torch.randn(1)
 simple_function(proxy)
