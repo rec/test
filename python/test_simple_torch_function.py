@@ -4,7 +4,13 @@ import torch.nn.functional as F
 
 @torch._dynamo.optimize(nopython=True)
 def simple_function(x):
-    return x.sigmoid()
+    # function call, twice to test wrapping
+    x = F.sigmoid(x)
+    x = F.sigmoid(x)
+    # method call, twice to test wrapping
+    x = x.sigmoid()
+    x = x.sigmoid()
+    return x
 
 
 class TensorProxy(torch.Tensor):
