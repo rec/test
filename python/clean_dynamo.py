@@ -1,37 +1,66 @@
 import re
 
-M0 = re.compile(r'[A-Z]\d+').match
-M1 = re.compile(r'\d\d:\d\d:\d\d\.\d+').match
-M2 = re.compile(r'\d+').match
 
-HEX = re.compile(r'\b(0x[0-9a-f]+)\b')
+class Fixer:
+    pattern: re.Patther
+
+    def _replace(self, part):
+        raise NotImplementedError
+
+    def _process(self, line):
+        for i, part in enumerate(self.pattern.split(line)):
+            yield self._replace(part) if i % 2 else part
+
+    def __call__(self, line):
+        return ''.join(self._process(line))
 
 
-def _remove_timestamps(line):
-    s = line.split(maxsplit=3)
-    if len(s) > 3 and M0(s[0]) and M1(s[1]) and M2(s[2]):
-        return f"{s[0]} {s[3]}"
+class Hex(Fixer):
+    pattern = re.compile(r'\b(0x[0-9a-f]+)\b')
+
+    def __init__(self):
+        self._cache = {}
+
+    def _replace(self, part):
+        return self.cache.setdefault(h, f'0x{len(self.cache):012x}')
+
+
+class TimestampAndPID(Fixer):
+    pattern = re.compile(r'[A-Z]\d+ \d\d:\d\d:\d\d\.\d+ \d+ ')
+
+    def _replace(self, part):
+        return part.split()[0] + ' '
+
+
+class CondaUrl(Fixer):
+    pattern = re.compile(r'(/home/[^/]+/.conda/envs/[^/]+)')
+
+    def _replace(self, part):
+        return '*conda'
+
+
+class GitUrl(Fixer):
+    pattern = re.compile(r'(/home/[^/]+/git[^/]*/pytorch/)')
+
+    def _replace(self, part):
+        return '*git/pytorch/'
+
+
+CONVERTERS = Hex(), TimestampAndPID(), CondaUrl(), GitUrl()
+
+
+def convert(line):
+    for c in converters:
+        line = c(line)
     return line
 
 
-def _canonicalize_hex(line, cache):
-    for i, parts in enumerate(HEX.split(line)):
-        if i % 2:
-            assert HEX.match(h)
-            yield cache.setdefault(h, f'0x{len(cache):012x}')
-        else:
-            yield part
-
-
-def _convert(line, cache):
-    line = _remove_timestamps(line)
-    return ''.join(_canonicalize_hex(line, cache))
-
-
 def convert_filename(fn):
-    cache = {}
     lines = list(open(fn))
-    open(fn, 'w').writelines(_convert(i, cache) for i in open(fn))
+    converted = [convert(line) for line in lines]
+    os.rename(fn, fn + '.bak')
+    with open(fn, 'w') as fp:
+        fp.writelines(converted)
 
 
 if __name__ == '__main__':
