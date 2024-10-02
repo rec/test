@@ -11,6 +11,8 @@ TOKEN_TYPES = token.NAME, token.STRING, token.OP
 
 Tokens = Sequence[TokenInfo]
 
+OMIT_COMMENT = '# noqa: setlint'
+
 
 def get_tokens(filename: str) -> Iterator[Tokens]:
     with open(filename, 'rb') as fp:
@@ -25,7 +27,7 @@ def get_tokens(filename: str) -> Iterator[Tokens]:
             yield buffer
 
 
-def get_sets(tl: Tokens) -> Iterator[TokenInfo]:
+def get_set_tokens(tl: Tokens) -> Iterator[TokenInfo]:
     def is_set(i, t):
         return (
             t.type == token.NAME
@@ -36,11 +38,20 @@ def get_sets(tl: Tokens) -> Iterator[TokenInfo]:
     yield from (t for i, t in enumerate(tl) if is_set(i, t))
 
 
+def omitted_lines(filename: str) -> Sequence[int]:
+    with open(filename) as fp:
+        for i, s in enumerate(fp):
+            if s.rstrip().endswith(OMIT_COMMENT):
+                yield i + 1  # Tokenizer lines start at 1
+
+
 def all_sets(filenames: Sequence[str]) -> Iterator[Tuple[str, TokenInfo]]:
-    for f in filenames:
-        for tl in get_tokens(f):
-            for s in get_sets(tl):
-                yield f, s
+    for filename in filenames:
+        omitted = set(omitted_lines(filename))
+        for token_list in get_tokens(filename):
+            for token in get_set_tokens(token_list):
+                if not omitted.intersection([token.start[0], token.end[0]]):
+                    yield filename, token
 
 
 def parse_args() -> argparse.Namespace:

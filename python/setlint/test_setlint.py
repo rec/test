@@ -11,7 +11,6 @@ EXPECTED_TOKENS = [
 ]
 
 EXPECTED_SETS = [
-[
     (
         'setlint-sample.txt',
         "TokenInfo(type=1 (NAME), string='set', start=(1, 4), end=(1, 7), "
