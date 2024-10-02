@@ -2,6 +2,7 @@ import setlint
 import token
 
 TESTFILE = 'setlint-sample.txt'
+TESTFILE2 = 'setlint-sample-2.txt'
 
 EXPECTED_TOKENS = [
     [('NAME', 'a'), ('OP', '='), ('NAME', 'set'), ('OP', '('), ('OP', ')')],
@@ -48,6 +49,6 @@ def test_all_sets():
 
 
 def test_omitted_lines():
-    actual = sorted(setlint.omitted_lines(TESTFILE))
+    actual = sorted(setlint.omitted_lines(TESTFILE2))
     expected = [1, 12]
     assert actual == expected
