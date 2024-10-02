@@ -1,6 +1,8 @@
 import setlint
 import token
 
+TESTFILE = 'setlint-sample.txt'
+
 EXPECTED_TOKENS = [
     [('NAME', 'a'), ('OP', '='), ('NAME', 'set'), ('OP', '('), ('OP', ')')],
     [('NAME', 'b'), ('OP', '='), ('STRING', "'set()'")],
@@ -12,17 +14,17 @@ EXPECTED_TOKENS = [
 
 EXPECTED_SETS = [
     (
-        'setlint-sample.txt',
+        TESTFILE,
         "TokenInfo(type=1 (NAME), string='set', start=(1, 4), end=(1, 7), "
         "line='a = set()\\n')",
     ),
     (
-        'setlint-sample.txt',
+        TESTFILE,
         "TokenInfo(type=1 (NAME), string='set', start=(3, 4), end=(3, 7), "
         "line='c = set\\n')",
     ),
     (
-        'setlint-sample.txt',
+        TESTFILE,
         "TokenInfo(type=1 (NAME), string='set', start=(6, 3), end=(6, 6), "
         "line='   set(\\n')",
     ),
@@ -34,12 +36,18 @@ def test_get_tokens():
         return token.tok_name[t.type], t.string
 
 
-    tokens = setlint.get_tokens('setlint-sample.txt')
+    tokens = setlint.get_tokens(TESTFILE)
     actual = [[_pair(t) for t in tl] for tl in tokens]
     assert actual == EXPECTED_TOKENS
 
 
 def test_all_sets():
-    all_sets = list(setlint.all_sets(['setlint-sample.txt']))
+    all_sets = list(setlint.all_sets([TESTFILE]))
     actual = [(s, str(t)) for s, t in all_sets]
     assert actual == EXPECTED_SETS
+
+
+def test_omitted_lines():
+    actual = sorted(setlint.omitted_lines(TESTFILE))
+    expected = [1, 12]
+    assert actual == expected

@@ -31,7 +31,7 @@ def get_set_tokens(tl: Tokens) -> Iterator[TokenInfo]:
     def is_set(i, t):
         return (
             t.type == token.NAME
-            and t.string in ('set', 'set(')
+            and t.string == 'set'
             and (not i or tl[i - 1].string != '.')
         )
 
