@@ -32,6 +32,25 @@ EXPECTED_SETS = [
 ]
 
 
+EXPECTED_SETS2 = [
+    (
+        TESTFILE2,
+        "TokenInfo(type=1 (NAME), string='set', start=(2, 4), end=(2, 7), "
+        "line='a = set()\\n')",
+    ),
+    (
+        TESTFILE2,
+        "TokenInfo(type=1 (NAME), string='set', start=(4, 4), end=(4, 7), "
+        "line='c = set\\n')",
+    ),
+    (
+        TESTFILE2,
+        "TokenInfo(type=1 (NAME), string='set', start=(8, 3), end=(8, 6), "
+        "line='   set(\\n')",
+    ),
+]
+
+
 def test_get_tokens():
     def _pair(t):
         return token.tok_name[t.type], t.string
@@ -50,5 +69,11 @@ def test_all_sets():
 
 def test_omitted_lines():
     actual = sorted(setlint.omitted_lines(TESTFILE2))
-    expected = [1, 12]
+    expected = [1, 5, 12]
     assert actual == expected
+
+
+def test_all_sets_omitted():
+    all_sets = list(setlint.all_sets([TESTFILE2]))
+    actual = [(s, str(t)) for s, t in all_sets]
+    assert actual == EXPECTED_SETS2

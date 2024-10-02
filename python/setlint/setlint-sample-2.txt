@@ -2,7 +2,7 @@ ignored = set()  # noqa: setlint
 a = set()
 b = 'set()'
 c = set
-ignored = set()
+ignored = set()  # noqa: setlint
 d = c.set
 f = (
    set(
