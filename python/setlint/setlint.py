@@ -56,7 +56,7 @@ def all_sets(filenames: Sequence[str]) -> Iterator[Tuple[str, TokenInfo]]:
                     yield filename, tok
 
 
-def add_configs(args: argparse.Namespace, config_filename: str) -> argparse.Namespace:
+def add_configs(args: argparse.Namespace, filename: str) -> argparse.Namespace:
     try:
         with open(filename) as fp:
             config = json.load(fp)
@@ -77,7 +77,7 @@ def add_configs(args: argparse.Namespace, config_filename: str) -> argparse.Name
 
 def get_files(args: argparse.Namespace) -> Sequence[str]:
     if args.files:
-        return files
+        return args.files
     raise NotImplementedError
 
 
@@ -92,9 +92,10 @@ def make_parser() -> argparse.ArgumentParser:
     add('-a', '--apply-patches', default=None, action='store_true', help=_HELP_APPLY_PATCHES)
     add('-e', '--exclude', action='append', help=_HELP_EXCLUDE)
     add('-i', '--include', action='append', help=_HELP_INCLUDE)
+    return parser
 
 
-def get_args(config_filename: str) -> argparse.args:
-    args = parser.parse_args()
+def get_args(config_filename: str) -> argparse.Namespace:
+    args = make_parser().parse_args()
     add_configs(args, config_filename)
     return args

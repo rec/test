@@ -51,12 +51,12 @@ EXPECTED_SETS2 = [
 ]
 
 
-def test_get_tokens():
+def test_get_all_tokens():
     def _pair(t):
         return token.tok_name[t.type], t.string
 
 
-    tokens = setlint.get_tokens(TESTFILE)
+    tokens = setlint.get_all_tokens(TESTFILE)
     actual = [[_pair(t) for t in tl] for tl in tokens]
     assert actual == EXPECTED_TOKENS
 
