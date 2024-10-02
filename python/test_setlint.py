@@ -1,9 +1,16 @@
-import tokenize as tok
+from setlint import get_tokens, tok
 
-with open('setlint-sample.txt', 'rb') as fp:
-    for t in tok.tokenize(fp.readline):
-        name = tok.tok_name[t.type]
-        if t.type in (tok.NAME, tok.STRING, tok.OP):
-            print(name, t.string)
-        elif t.type in (tok.NEWLINE, tok.NL):
-            print('   ', name)
+EXPECTED = [
+    [('NAME', 'a'), ('OP', '='), ('NAME', 'set'), ('OP', '('), ('OP', ')')],
+    [('NAME', 'b'), ('OP', '='), ('STRING', "'set()'")],
+    [('NAME', 'c'), ('OP', '='), ('NAME', 'set')],
+    [('NAME', 'd'), ('OP', '='), ('NAME', 'c'), ('OP', '.'), ('NAME', 'set')],
+    [('NAME', 'f'), ('OP', '='), ('OP', '('), ('NAME', 'set'), ('OP', '('), ('OP', ')'), ('OP', ')')],
+    [('NAME', 'e'), ('OP', '='), ('STRING', '""" set()\nset() set x.set set()\n\\""""')],
+]
+
+
+def test_setlint():
+    tokens = get_tokens('setlint-sample.txt')
+    actual = [[(tok.tok_name[i.type], i.string) for i in t] for t in tokens]
+    assert actual == EXPECTED
