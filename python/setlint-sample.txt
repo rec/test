@@ -1,0 +1,11 @@
+a = set()
+b = 'set()'
+c = set
+d = c.set
+f = (
+   set(
+   )
+)
+e = """ set()
+set() set x.set set()
+\""""

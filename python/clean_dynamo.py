@@ -2,7 +2,7 @@ import re
 
 
 class Fixer:
-    pattern: re.Patther
+    pattern: re.Pattern
 
     def _replace(self, part):
         raise NotImplementedError
@@ -22,11 +22,12 @@ class Hex(Fixer):
         self._cache = {}
 
     def _replace(self, part):
-        return self.cache.setdefault(h, f'0x{len(self.cache):012x}')
+        name = f'0x{0xFACE_0000 + len(self._cache):012x}'
+        return self._cache.setdefault(part, name)
 
 
 class TimestampAndPID(Fixer):
-    pattern = re.compile(r'[A-Z]\d+ \d\d:\d\d:\d\d\.\d+ \d+ ')
+    pattern = re.compile(r'([^\s]+ \d\d:\d\d:\d\d\.\d+ \d+ )')
 
     def _replace(self, part):
         return part.split()[0] + ' '
@@ -46,11 +47,16 @@ class GitUrl(Fixer):
         return '*git/pytorch/'
 
 
-CONVERTERS = Hex(), TimestampAndPID(), CondaUrl(), GitUrl()
+CONVERTERS = (
+    Hex(),
+    TimestampAndPID(),
+    CondaUrl(),
+    GitUrl(),
+)
 
 
 def convert(line):
-    for c in converters:
+    for c in CONVERTERS:
         line = c(line)
     return line
 
@@ -58,8 +64,8 @@ def convert(line):
 def convert_filename(fn):
     lines = list(open(fn))
     converted = [convert(line) for line in lines]
-    os.rename(fn, fn + '.bak')
-    with open(fn, 'w') as fp:
+    # os.rename(fn, fn + '.bak')
+    with open(fn + '.out', 'w') as fp:
         fp.writelines(converted)
 
 
