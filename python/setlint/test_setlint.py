@@ -1,8 +1,8 @@
 import records
 import token
 
-TESTFILE = records.FileRecord('setlint-sample.txt')
-TESTFILE2 = records.FileRecord('setlint-sample-2.txt')
+TESTFILE = records.FindSetTokens('setlint-sample.txt')
+TESTFILE2 = records.FindSetTokens('setlint-sample-2.txt')
 
 EXPECTED_TOKENS = [
     [('NAME', 'a'), ('OP', '='), ('NAME', 'set'), ('OP', '('), ('OP', ')')],
@@ -49,7 +49,7 @@ def test_get_all_tokens():
     def _pair(t):
         return token.tok_name[t.type], t.string
 
-    tokens = TESTFILE.token_lines()
+    tokens = TESTFILE._token_lines()
     actual = [[_pair(t) for t in tl] for tl in tokens]
     assert actual == EXPECTED_TOKENS
 
@@ -61,7 +61,7 @@ def test_all_sets():
 
 
 def test_omitted_lines():
-    actual = sorted(TESTFILE2.omitted_lines)
+    actual = sorted(TESTFILE2._omitted_lines)
     expected = [1, 5, 12]
     assert actual == expected
 
