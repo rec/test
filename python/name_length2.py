@@ -1,19 +1,11 @@
-def is_anagram_short(s: str, t: str) -> bool:
-    if len(s) != len(t):
-        return False
-    cc = [0] * 26
+def is_anagram(s: str, t: str) -> bool:
+    def counter(x):
+        r = {}
+        for i in x:
+            r[i] = r.get(i, 0) + 1
+        return r
 
-    for c in s:
-        cc[ord(c) - ord('a')] += 1
-    for c in t:
-        cc[ord(c) - ord('a')] -= 1
-        if cc[ord(c) - ord('a')] < 0:
-            return False
-    for i in cc:
-        if i != 0:
-            return False
-    return True
-
+    return counter(s) == counter(t)
 
 def is_anagram_long(s: str, t: str) -> bool:
     if len(s) != len(t):
