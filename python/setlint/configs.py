@@ -12,14 +12,16 @@ def add_configs(args: argparse.Namespace, filename: str) -> argparse.Namespace:
 
     if bad := set(config) - set(vars(args)):
         s = '' if len(bad) == 1 else 's'
-        bad = ', '.join(sorted(bad))
-        raise ValueError(f'Unknown arg{s}: {bad}')
+        bad_name = ', '.join(sorted(bad))
+        raise ValueError(f'Unknown arg{s}: {bad_name}')
 
     for k, v in config.items():
         if k == 'fix' and args.fix is None:
             args.fix = v
         else:
             setattr(args, k, getattr(args, k) or v)
+
+    return args
 
 
 def get_files(args: argparse.Namespace) -> Sequence[str]:

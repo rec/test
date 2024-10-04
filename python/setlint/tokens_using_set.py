@@ -24,12 +24,12 @@ class TokensUsingSet:
     filename: str
 
     @functools.cached_property
-    def token_lines(self) -> List[TokenInfo]:
+    def token_lines(self) -> List[TokenLine]:
         omitted = OmittedLines(self.filename)
         token_lines: List[TokenLine] = []
 
         with open(self.filename, 'rb') as fp:
-            buffer: TokenLine = []
+            buffer: List[TokenInfo] = []
 
             for t in tokenize(fp.readline):
                 if t.type == token.NEWLINE:

@@ -15,4 +15,4 @@ class OmittedLines:
     def __call__(self, tl: TokenLine) -> bool:
         # A TokenLine might span multiple physical lines
         lines = {i for tok in tl for i in (tok.start[0], tok.end[0])}
-        return self.lines.intersection(lines)
+        return bool(self.lines.intersection(lines))
