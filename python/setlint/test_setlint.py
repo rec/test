@@ -61,7 +61,7 @@ def test_find_set_tokens():
 
 
 def test_omitted_lines():
-    actual = sorted(TESTFILE2._omitted_lines)
+    actual = sorted(TESTFILE2.omitted.lines)
     expected = [1, 5, 12]
     assert actual == expected
 
