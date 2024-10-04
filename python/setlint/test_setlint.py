@@ -50,7 +50,7 @@ def test_get_all_tokens():
     def _pair(t):
         return token.tok_name[t.type], t.string
 
-    actual = [[_pair(t) for t in tl] for tl in TESTFILE.token_lines]
+    actual = [[_pair(t) for t in tl.tokens] for tl in TESTFILE.token_lines]
     assert actual == EXPECTED_TOKENS
 
     actual = [str(t) for t in TESTFILE.tokens]

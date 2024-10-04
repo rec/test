@@ -1,4 +1,4 @@
-from is_token_using_set import TokenLine
+from typing import Sequence
 
 OMIT_COMMENT = '# noqa: setlint'
 
@@ -12,7 +12,6 @@ class OmittedLines:
                 if s.rstrip().endswith(OMIT_COMMENT):
                     self.lines.add(i + 1)  # Tokenizer lines start at 1
 
-    def __call__(self, tl: TokenLine) -> bool:
+    def __call__(self, tl: Sequence[int]) -> bool:
         # A TokenLine might span multiple physical lines
-        lines = {i for tok in tl for i in (tok.start[0], tok.end[0])}
-        return bool(self.lines.intersection(lines))
+        return bool(self.lines.intersection(tl))

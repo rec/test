@@ -1,34 +1,33 @@
+from token_line import TokenLine
 from tokens_using_set import TokensUsingSet
-from typing import List
+from typing import Dict, List, Tuple
+import token
 
 
-def fix_tokens_using_set(tokens: TokensUsingSet) -> int:
+def fix_tokens_using_set(tokens: TokensUsingSet) -> Tuple[List[str], int]:
     if not tokens.tokens:
-        return 0
+        return [], 0
 
     # First replace all the instances of set with OrderedSet
     with open(tokens.filename) as fp:
-        lines = fp.readlines()
+        contents = fp.readlines()
 
     reverse_tokens = sorted(tokens.tokens, key=lambda t: t.start, reverse=True)
     for count, t in enumerate(reverse_tokens):
         (start_line, start_col), (end_line, end_col) = t.start, t.end
         assert start_line == end_line
-        line = lines[start_line]
+        line = contents[start_line]
 
         a, b, c = line[:start_col], line[start_col:end_col], line[end_col:]
         assert b == 'set'
-        lines[start_line] = f'{a}OrderedSet{c}'
+        contents[start_line] = f'{a}OrderedSet{c}'
 
-    if not any(_match_import(line) for line in lines):
+    if not any(_match_import(line) for line in contents):
         # Add the missing import and hope that ruff puts it in the right place
-        _add_import(lines, tokens)
+        _add_import(contents, tokens)
         count += 1
 
-    with open(tokens.filename, 'w') as fp:
-        fp.writelines(lines)
-
-    return count
+    return contents, count
 
 
 def _match_import(line: str) -> bool:
@@ -41,5 +40,21 @@ def _match_import(line: str) -> bool:
     )
 
 
-def _add_import(lines: List[str], tokens: TokensUsingSet):
-    pass
+def _add_import(contents: List[str], tokens: TokensUsingSet):
+    lines: Dict[str, List[TokenLine]] = {}
+    for tl in tokens.token_lines:
+        t = tl.tokens[0]
+        if t.type == token.NAME:
+            lines.setdefault(t.string, []).append(tl)
+    """
+
+
+    lasts = {tl[0].string: tl for tl in lines[]
+
+            lasts[tl[0].string] = tl
+
+
+
+
+    froms = [tl for tl in tokens.token_lines if accept(tl, 'from')]
+    """

@@ -3,7 +3,7 @@ import functools
 import token
 from tokenize import tokenize, TokenInfo
 from typing import List
-from is_token_using_set import is_token_using_set, TokenLine
+from token_line import TokenLine
 from omitted_lines import OmittedLines
 
 TOKEN_TYPES = token.NAME, token.STRING, token.OP, token.NEWLINE
@@ -29,16 +29,16 @@ class TokensUsingSet:
         token_lines: List[TokenLine] = []
 
         with open(self.filename, 'rb') as fp:
-            buffer: List[TokenInfo] = []
+            token_line = TokenLine()
 
             for t in tokenize(fp.readline):
                 if t.type == token.NEWLINE:
-                    if not omitted(buffer):
-                        token_lines.append(buffer)
-                    buffer = []
+                    if not omitted(token_line.lines_covered()):
+                        token_lines.append(token_line)
+                    token_line = TokenLine()
                 elif t.type in TOKEN_TYPES:
-                    buffer.append(t)
-            assert not buffer
+                    token_line.tokens.append(t)
+            assert not token_line.tokens
 
         return token_lines
 
@@ -46,6 +46,6 @@ class TokensUsingSet:
     def tokens(self) -> List[TokenInfo]:
         tokens: List[TokenInfo] = []
         for tl in self.token_lines:
-            tokens.extend(t for i, t in enumerate(tl) if is_token_using_set(tl, i))
+            tokens.extend(tl.tokens_using_set())
 
         return tokens
