@@ -2,11 +2,6 @@ import argparse
 import json
 from typing import Sequence
 
-_HELP_EXCLUDE = 'Files or directories to exclude'
-_HELP_FIX = 'Actually fix any issues, if possible'
-_HELP_INCLUDE = 'Files or directories to include'
-_HELP_FILES = 'Files to check. Overrides --exclude and --include if set'
-
 
 def add_configs(args: argparse.Namespace, filename: str) -> argparse.Namespace:
     try:
@@ -40,10 +35,10 @@ def make_parser() -> argparse.ArgumentParser:
 
     parser = argparse.ArgumentParser(formatter_class=HelpFormatter)
     add = parser.add_argument
-    add('files', nargs='*', help=_HELP_FILES)
-    add('-e', '--exclude', action='append', help=_HELP_EXCLUDE)
-    add('-f', '--fix', default=None, action='store_true', help=_HELP_FIX)
-    add('-i', '--include', action='append', help=_HELP_INCLUDE)
+
+    add('files', nargs='*', help='Files or directories to exclude')
+    add('-e', '--exclude', action='append', help='Files to check.')
+    add('-f', '--fix', default=None, action='store_true', help='Fix any issues')
     return parser
 
 

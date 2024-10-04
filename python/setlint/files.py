@@ -1,10 +1,8 @@
 from pathlib import Path
 from typing import Generator, List, Sequence, Set
 
-FNMATCH_CHARS = set("""!*?[]""")
 
-
-def filter_files(
+def python_files(
     include: List[str], exclude: List[str], root: str='.'
 ) -> Generator[str, None, None]:
     include = [j for i in include for j in i.split(':')]
