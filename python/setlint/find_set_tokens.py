@@ -1,7 +1,7 @@
 import functools
 import token
 from tokenize import tokenize, TokenInfo
-from typing import Generator, Iterator, List, Sequence, Set
+from typing import Generator, List, Set
 
 TOKEN_TYPES = token.NAME, token.STRING, token.OP, token.NEWLINE
 OMIT_COMMENT = '# noqa: setlint'
@@ -75,5 +75,5 @@ class FindSetTokens:
         return lines
 
 
-def find_set_tokens(filename: str) -> Generator['TokenInFile', None, None]:
+def find_set_tokens(filename: str) -> Generator[TokenInfo, None, None]:
     return FindSetTokens(filename).find_set_tokens()
