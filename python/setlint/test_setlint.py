@@ -1,8 +1,8 @@
-import records
+from find_set_tokens import FindSetTokens
 import token
 
-TESTFILE = records.FindSetTokens('setlint-sample.txt')
-TESTFILE2 = records.FindSetTokens('setlint-sample-2.txt')
+TESTFILE = FindSetTokens('setlint-sample.txt')
+TESTFILE2 = FindSetTokens('setlint-sample-2.txt')
 
 EXPECTED_TOKENS = [
     [('NAME', 'a'), ('OP', '='), ('NAME', 'set'), ('OP', '('), ('OP', ')')],
@@ -54,9 +54,9 @@ def test_get_all_tokens():
     assert actual == EXPECTED_TOKENS
 
 
-def test_all_sets():
-    all_sets = list(TESTFILE.all_sets)
-    actual = [ft for ft in all_sets]
+def test_find_set_tokens():
+    actual = [str(i) for i in TESTFILE.find_set_tokens()]
+    assert len(actual) == len(EXPECTED_SETS)
     assert actual == EXPECTED_SETS
 
 
@@ -67,6 +67,6 @@ def test_omitted_lines():
 
 
 def test_all_sets_omitted():
-    all_sets = list(TESTFILE2.all_sets())
-    actual = [(s, str(t)) for s, t in all_sets]
+    actual = [str(i) for i in TESTFILE2.find_set_tokens()]
+    assert len(actual) == len(EXPECTED_SETS2)
     assert actual == EXPECTED_SETS2

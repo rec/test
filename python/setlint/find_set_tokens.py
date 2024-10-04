@@ -1,4 +1,3 @@
-import dataclasses as dc
 import functools
 import token
 from tokenize import tokenize, TokenInfo
@@ -11,7 +10,7 @@ TokenLine = List[TokenInfo]
 """
 Python's tokenizer splits Python code into lexical tokens tagged with one of many
 token names. We are only interested in a few of these: references to the built-in `set`
-will have to be in a NAME token, and we're only care about enough context to see if it's a 
+will have to be in a NAME token, and we're only care about enough context to see if it's a
 really `set` or, say, a method `set`.
 
 TODO:
@@ -20,13 +19,13 @@ TODO:
 """
 
 
-@dc.dataclass
 class FindSetTokens:
-    name: str
+    def __init__(self, filename: str) -> None:
+        self.name = filename
 
     def find_set_tokens(self) -> Generator[TokenInfo, None, None]:
         for tl in self._token_lines():
-            yield from (t for i, t in enumerate(tl) if self._has_set(i, t))
+            yield from (t for i, t in enumerate(tl) if self._has_set(tl, i))
 
     def _has_set(self, tokens: TokenLine, i: int) -> bool:
         # This is where the logic to recognize `set` goes, and
@@ -68,7 +67,7 @@ class FindSetTokens:
 
     @functools.cached_property
     def _omitted_lines(self) -> Set[int]:
-        lines = {}
+        lines = set()
         with open(self.name) as fp:
             for i, s in enumerate(fp):
                 if s.rstrip().endswith(OMIT_COMMENT):
