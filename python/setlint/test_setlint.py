@@ -1,4 +1,4 @@
-from tokens_using_set import tokens_using_set, _token_lines
+from tokens_using_set import tokens_using_set
 from omitted_lines import OmittedLines
 import token
 
@@ -50,13 +50,11 @@ def test_get_all_tokens():
     def _pair(t):
         return token.tok_name[t.type], t.string
 
-    tokens = _token_lines(TESTFILE)
-    actual = [[_pair(t) for t in tl] for tl in tokens]
+    lines, tokens = tokens_using_set(TESTFILE)
+    actual = [[_pair(t) for t in tl] for tl in lines]
     assert actual == EXPECTED_TOKENS
 
-
-def test_find_set_tokens():
-    actual = [str(i) for i in tokens_using_set(TESTFILE)]
+    actual = [str(t) for t in tokens]
     assert len(actual) == len(EXPECTED_SETS)
     assert actual == EXPECTED_SETS
 
@@ -68,6 +66,6 @@ def test_omitted_lines():
 
 
 def test_all_sets_omitted():
-    actual = [str(i) for i in tokens_using_set(TESTFILE2)]
-    assert len(actual) == len(EXPECTED_SETS2)
+    _lines, tokens = tokens_using_set(TESTFILE2)
+    actual = [str(i) for i in tokens]
     assert actual == EXPECTED_SETS2

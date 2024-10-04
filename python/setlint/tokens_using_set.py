@@ -5,7 +5,6 @@ from is_token_using_set import is_token_using_set, TokenLine
 from omitted_lines import OmittedLines
 
 TOKEN_TYPES = token.NAME, token.STRING, token.OP, token.NEWLINE
-OMIT_COMMENT = '# noqa: setlint'
 
 """
 Python's tokenizer splits Python code into lexical tokens tagged with one of many
@@ -19,11 +18,11 @@ TODO:
 
 def tokens_using_set(filename: str) -> List[TokenInfo]:
     tokens: List[TokenInfo] = []
-    for tl in _token_lines(filename):
+    lines = _token_lines(filename)
+    for tl in lines:
         tokens.extend(t for i, t in enumerate(tl) if is_token_using_set(tl, i))
 
-    tokens.sort(key=lambda t: t.start)
-    return tokens
+    return lines, tokens
 
 
 def _token_lines(filename: str) -> List[TokenInfo]:
