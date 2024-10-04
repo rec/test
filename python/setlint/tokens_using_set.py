@@ -1,7 +1,6 @@
-import functools
 import token
 from tokenize import tokenize, TokenInfo
-from typing import Generator, List
+from typing import List
 from is_token_using_set import is_token_using_set, TokenLine
 from omitted_lines import OmittedLines
 
@@ -18,29 +17,29 @@ TODO:
 * handle `def set()` - now test it!
 """
 
+def tokens_using_set(filename: str) -> List[TokenInfo]:
+    tokens: List[TokenInfo] = []
+    for tl in _token_lines(filename):
+        tokens.extend(t for i, t in enumerate(tl) if is_token_using_set(tl, i))
 
-class TokensUsingSet:
-    def __init__(self, filename: str) -> None:
-        self.filename = filename
-        self.omitted = OmittedLines(filename)
+    tokens.sort(key=lambda t: t.start)
+    return tokens
 
-    @functools.cached_property
-    def tokens_using_set(self) -> List[TokenInfo]:
-        tokens: List[TokenInfo] = []
-        for tl in self._token_lines():
-            tokens.extend(t for i, t in enumerate(tl) if is_token_using_set(tl, i))
-        tokens.sort(key=lambda t: t.start)
-        return tokens
 
-    def _token_lines(self) -> Generator[TokenLine, None, None]:
-        with open(self.filename, 'rb') as fp:
-            buffer: TokenLine = []
+def _token_lines(filename: str) -> List[TokenInfo]:
+    omitted = OmittedLines(filename)
+    token_lines: List[TokenLine] = []
 
-            for t in tokenize(fp.readline):
-                if t.type == token.NEWLINE:
-                    if not self.omitted(buffer):
-                        yield buffer
-                    buffer = []
-                elif t.type in TOKEN_TYPES:
-                    buffer.append(t)
-            assert not buffer
+    with open(filename, 'rb') as fp:
+        buffer: TokenLine = []
+
+        for t in tokenize(fp.readline):
+            if t.type == token.NEWLINE:
+                if not omitted(buffer):
+                    token_lines.append(buffer)
+                buffer = []
+            elif t.type in TOKEN_TYPES:
+                buffer.append(t)
+        assert not buffer
+
+    return token_lines
