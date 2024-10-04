@@ -23,11 +23,11 @@ def python_glob(root: Path, strings: Sequence[str], *, check_errors) -> Set[str]
     for s in strings:
         p = root / s
         if p.is_dir():
-            result.extend(p.glob('**/*.py'))
+            result.update(p.glob('**/*.py'))
         elif p.suffix != '.py':
             nonexistent.append(p)
         elif p.exists():
-            result.append(p)
+            result.add(p)
         else:
             not_python.append(p)
 
