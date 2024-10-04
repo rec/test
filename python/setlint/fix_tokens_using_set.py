@@ -1,16 +1,21 @@
+from is_token_using_set import TokenLine
 from tokenize import TokenInfo
-from typing import List
+from typing import Sequence
 
 
-def fix_tokens_using_set(filename: str, tokens: List[TokenInfo]) -> None:
+def fix_tokens_using_set(
+    filename: str,
+    tokens: Sequence[TokenInfo],
+    token_lines: Sequence[TokenLine],
+) -> int:
     if not tokens:
-        return
+        return 0
 
     # First replace all the instances of set with OrderedSet
     with open(filename) as fp:
         lines = fp.readlines()
 
-    for t in tokens.sorted(key=lambda t: t.first, reverse=True):
+    for count, t in enumerate(tokens.sorted(key=lambda t: t.first, reverse=True)):
         start_line, start_col = t.start
         end_line, end_col = t.end
         assert start_line == end_line
@@ -23,9 +28,12 @@ def fix_tokens_using_set(filename: str, tokens: List[TokenInfo]) -> None:
     if not any(_match_import(line) for line in lines):
         # Add the missing import and hope that ruff puts it in the right place
         _add_import(lines)
+        count += 1
 
     with open(filename, 'w') as fp:
         fp.writelines(lines)
+
+    return count
 
 
 def _match_import(line: str) -> bool:
