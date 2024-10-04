@@ -1,11 +1,11 @@
 import functools
 import token
 from tokenize import tokenize, TokenInfo
-from typing import Generator, List, Set
+from typing import Generator, List, Set, Tuple
+from is_set_token import is_set_token, TokenLine
 
 TOKEN_TYPES = token.NAME, token.STRING, token.OP, token.NEWLINE
 OMIT_COMMENT = '# noqa: setlint'
-TokenLine = List[TokenInfo]
 
 """
 Python's tokenizer splits Python code into lexical tokens tagged with one of many
@@ -15,35 +15,22 @@ really `set` or, say, a method `set`.
 
 TODO:
 * handle `def set()` - now test it!
-
 """
 
 
 class FindSetTokens:
     def __init__(self, filename: str) -> None:
-        self.name = filename
+        self.filename = filename
 
-    def find_set_tokens(self) -> Generator[TokenInfo, None, None]:
+    @functools.cached_property
+    def set_tokens(self) -> Tuple[TokenInfo]:
+        set_tokens: List[TokenInfo] = []
         for tl in self._token_lines():
-            yield from (t for i, t in enumerate(tl) if self._has_set(tl, i))
-
-    def _has_set(self, tokens: TokenLine, i: int) -> bool:
-        # This is where the logic to recognize `set` goes, and
-        # probably most bug-fixes.
-        t = tokens[i]
-        if t.string != 'set' or t.type != token.NAME:
-            return False
-        if i and tokens[i - 1].string in ('def', '.'):
-            return False
-        if i >= len(tokens) - 1:
-            return True
-        u = tokens[i + 1]
-        if u.string == '=' and u.type == token.OP:
-            return False
-        return True
+            set_tokens.extend(t for i, t in enumerate(tl) if is_set_token(tl, i))
+        return tuple(set_tokens)
 
     def _all_tokens(self) -> Generator[TokenInfo, None, None]:
-        with open(self.name, 'rb') as fp:
+        with open(self.filename, 'rb') as fp:
             for t in tokenize(fp.readline):
                 if t.type in TOKEN_TYPES:
                     yield t
@@ -68,7 +55,7 @@ class FindSetTokens:
     @functools.cached_property
     def _omitted_lines(self) -> Set[int]:
         lines = set()
-        with open(self.name) as fp:
+        with open(self.filename) as fp:
             for i, s in enumerate(fp):
                 if s.rstrip().endswith(OMIT_COMMENT):
                     lines.add(i + 1)  # Tokenizer lines start at 1

@@ -55,7 +55,7 @@ def test_get_all_tokens():
 
 
 def test_find_set_tokens():
-    actual = [str(i) for i in TESTFILE.find_set_tokens()]
+    actual = [str(i) for i in TESTFILE.set_tokens]
     assert len(actual) == len(EXPECTED_SETS)
     assert actual == EXPECTED_SETS
 
@@ -67,6 +67,6 @@ def test_omitted_lines():
 
 
 def test_all_sets_omitted():
-    actual = [str(i) for i in TESTFILE2.find_set_tokens()]
+    actual = [str(i) for i in TESTFILE2.set_tokens]
     assert len(actual) == len(EXPECTED_SETS2)
     assert actual == EXPECTED_SETS2
