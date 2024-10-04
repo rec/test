@@ -1,8 +1,8 @@
-from find_set_tokens import FindSetTokens
+from tokens_using_set import TokensUsingSet
 import token
 
-TESTFILE = FindSetTokens('setlint-sample.txt')
-TESTFILE2 = FindSetTokens('setlint-sample-2.txt')
+TESTFILE = TokensUsingSet('setlint-sample.txt')
+TESTFILE2 = TokensUsingSet('setlint-sample-2.txt')
 
 EXPECTED_TOKENS = [
     [('NAME', 'a'), ('OP', '='), ('NAME', 'set'), ('OP', '('), ('OP', ')')],
@@ -55,7 +55,7 @@ def test_get_all_tokens():
 
 
 def test_find_set_tokens():
-    actual = [str(i) for i in TESTFILE.set_tokens]
+    actual = [str(i) for i in TESTFILE.tokens_using_set]
     assert len(actual) == len(EXPECTED_SETS)
     assert actual == EXPECTED_SETS
 
@@ -67,6 +67,6 @@ def test_omitted_lines():
 
 
 def test_all_sets_omitted():
-    actual = [str(i) for i in TESTFILE2.set_tokens]
+    actual = [str(i) for i in TESTFILE2.tokens_using_set]
     assert len(actual) == len(EXPECTED_SETS2)
     assert actual == EXPECTED_SETS2

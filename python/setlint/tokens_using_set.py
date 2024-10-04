@@ -2,7 +2,7 @@ import functools
 import token
 from tokenize import tokenize, TokenInfo
 from typing import Generator, List, Set, Tuple
-from is_set_token import is_set_token, TokenLine
+from is_token_using_set import is_token_using_set, TokenLine
 
 TOKEN_TYPES = token.NAME, token.STRING, token.OP, token.NEWLINE
 OMIT_COMMENT = '# noqa: setlint'
@@ -18,16 +18,16 @@ TODO:
 """
 
 
-class FindSetTokens:
+class TokensUsingSet:
     def __init__(self, filename: str) -> None:
         self.filename = filename
 
     @functools.cached_property
-    def set_tokens(self) -> Tuple[TokenInfo]:
-        set_tokens: List[TokenInfo] = []
+    def tokens_using_set(self) -> Tuple[TokenInfo]:
+        tokens: List[TokenInfo] = []
         for tl in self._token_lines():
-            set_tokens.extend(t for i, t in enumerate(tl) if is_set_token(tl, i))
-        return tuple(set_tokens)
+            tokens.extend(t for i, t in enumerate(tl) if is_token_using_set(tl, i))
+        return tuple(tokens)
 
     def _all_tokens(self) -> Generator[TokenInfo, None, None]:
         with open(self.filename, 'rb') as fp:
@@ -62,5 +62,5 @@ class FindSetTokens:
         return lines
 
 
-def find_set_tokens(filename: str) -> Generator[TokenInfo, None, None]:
-    return FindSetTokens(filename).find_set_tokens()
+def tokens_using_set(filename: str) -> Generator[TokenInfo, None, None]:
+    return TokensUsingSet(filename).tokens_using_set

@@ -5,7 +5,7 @@ from tokenize import TokenInfo
 TokenLine = Sequence[TokenInfo]
 
 
-def is_set_token(tokens: TokenLine, i: int) -> bool:
+def is_token_using_set(tokens: TokenLine, i: int) -> bool:
     # This is where the logic to recognize `set` goes, and
     # probably most bug-fixes.
     t = tokens[i]
