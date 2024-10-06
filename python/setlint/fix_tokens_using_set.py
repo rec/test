@@ -48,14 +48,8 @@ def _add_import(contents: List[str], tokens: TokensUsingSet):
         if t.type == token.NAME:
             lines.setdefault(t.string, []).append(tl)
     """
-
-
     lasts = {tl[0].string: tl for tl in lines[]
 
             lasts[tl[0].string] = tl
-
-
-
-
     froms = [tl for tl in tokens.token_lines if accept(tl, 'from')]
     """

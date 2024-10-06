@@ -19,4 +19,4 @@ class A:
 set = A().set  # Also gets ignored!
 
 good = {}
-bad = {1}
+bad = {1}  # TODO: Should get caught
