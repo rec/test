@@ -28,7 +28,7 @@ class TokensUsingSet:
         omitted = OmittedLines(self.filename)
         token_lines: List[TokenLine] = []
 
-        with open(self.filename, 'rb') as fp:
+        with open(self.filename, "rb") as fp:
             token_line = TokenLine()
 
             for t in tokenize(fp.readline):

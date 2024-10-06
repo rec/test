@@ -1,6 +1,6 @@
 from typing import Sequence
 
-OMIT_COMMENT = '# noqa: setlint'
+OMIT_COMMENT = "# noqa: setlint"
 
 
 class OmittedLines:

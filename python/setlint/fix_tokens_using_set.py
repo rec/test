@@ -19,8 +19,8 @@ def fix_tokens_using_set(tokens: TokensUsingSet) -> Tuple[List[str], int]:
         line = contents[start_line]
 
         a, b, c = line[:start_col], line[start_col:end_col], line[end_col:]
-        assert b == 'set'
-        contents[start_line] = f'{a}OrderedSet{c}'
+        assert b == "set"
+        contents[start_line] = f"{a}OrderedSet{c}"
 
     if not any(_match_import(line) for line in contents):
         # Add the missing import and hope that ruff puts it in the right place
@@ -31,12 +31,13 @@ def fix_tokens_using_set(tokens: TokensUsingSet) -> Tuple[List[str], int]:
 
 
 def _match_import(line: str) -> bool:
-    p = [j for i in line.split() for j in i.split('.') if j]
+    p = [j for i in line.split() for j in i.split(".") if j]
     return (
         bool(p)
-        and p[0] == 'from'
-        and p[-1] == 'OrderedSet'
-        and 'import' in p and 'utils' in p
+        and p[0] == "from"
+        and p[-1] == "OrderedSet"
+        and "import" in p
+        and "utils" in p
     )
 
 

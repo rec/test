@@ -11,12 +11,12 @@ def add_configs(args: argparse.Namespace, filename: str) -> argparse.Namespace:
         config = {}
 
     if bad := set(config) - set(vars(args)):
-        s = '' if len(bad) == 1 else 's'
-        bad_name = ', '.join(sorted(bad))
-        raise ValueError(f'Unknown arg{s}: {bad_name}')
+        s = "" if len(bad) == 1 else "s"
+        bad_name = ", ".join(sorted(bad))
+        raise ValueError(f"Unknown arg{s}: {bad_name}")
 
     for k, v in config.items():
-        if k == 'fix' and args.fix is None:
+        if k == "fix" and args.fix is None:
             args.fix = v
         else:
             setattr(args, k, getattr(args, k) or v)
@@ -38,9 +38,9 @@ def make_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(formatter_class=HelpFormatter)
     add = parser.add_argument
 
-    add('files', nargs='*', help='Files or directories to exclude')
-    add('-e', '--exclude', action='append', help='Files to check.')
-    add('-f', '--fix', default=None, action='store_true', help='Fix any issues')
+    add("files", nargs="*", help="Files or directories to exclude")
+    add("-e", "--exclude", action="append", help="Files to check.")
+    add("-f", "--fix", default=None, action="store_true", help="Fix any issues")
     return parser
 
 

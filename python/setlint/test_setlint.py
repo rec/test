@@ -2,20 +2,49 @@ from tokens_using_set import TokensUsingSet
 from omitted_lines import OmittedLines
 import token
 
-TESTFILE = TokensUsingSet('setlint-sample.txt')
-TESTFILE2 = TokensUsingSet('setlint-sample-2.txt')
+TESTFILE = TokensUsingSet("setlint-sample.txt")
+TESTFILE2 = TokensUsingSet("setlint-sample-2.txt")
 
 EXPECTED_TOKENS = [
-    [('NAME', 'a'), ('OP', '='), ('NAME', 'set'), ('OP', '('), ('OP', ')')],
-    [('NAME', 'b'), ('OP', '='), ('STRING', "'set()'")],
-    [('NAME', 'c'), ('OP', '='), ('NAME', 'set')],
-    [('NAME', 'd'), ('OP', '='), ('NAME', 'c'), ('OP', '.'), ('NAME', 'set')],
-    [('NAME', 'f'), ('OP', '='), ('OP', '('), ('NAME', 'set'), ('OP', '('), ('OP', ')'), ('OP', ')')],
-    [('NAME', 'e'), ('OP', '='), ('STRING', '""" set()\nset() set x.set set()\n\\""""')],
-    [('NAME', 'class'), ('NAME', 'A'), ('OP', ':')],
-    [('NAME', 'def'), ('NAME', 'set'), ('OP',  '('), ('NAME', 'self'), ('OP',  ','), ('NAME', 'x'), ('OP',  ')'), ('OP',  ':')],
-    [('NAME', 'self'), ('OP',  '.'), ('NAME', 'x'), ('OP',  '='), ('NAME', 'x')],
-    [('NAME', 'set'), ('OP',  '='), ('NAME', 'A'), ('OP',  '('), ('OP',  ')'), ('OP',  '.'), ('NAME', 'set')],
+    [("NAME", "a"), ("OP", "="), ("NAME", "set"), ("OP", "("), ("OP", ")")],
+    [("NAME", "b"), ("OP", "="), ("STRING", "'set()'")],
+    [("NAME", "c"), ("OP", "="), ("NAME", "set")],
+    [("NAME", "d"), ("OP", "="), ("NAME", "c"), ("OP", "."), ("NAME", "set")],
+    [
+        ("NAME", "f"),
+        ("OP", "="),
+        ("OP", "("),
+        ("NAME", "set"),
+        ("OP", "("),
+        ("OP", ")"),
+        ("OP", ")"),
+    ],
+    [
+        ("NAME", "e"),
+        ("OP", "="),
+        ("STRING", '""" set()\nset() set x.set set()\n\\""""'),
+    ],
+    [("NAME", "class"), ("NAME", "A"), ("OP", ":")],
+    [
+        ("NAME", "def"),
+        ("NAME", "set"),
+        ("OP", "("),
+        ("NAME", "self"),
+        ("OP", ","),
+        ("NAME", "x"),
+        ("OP", ")"),
+        ("OP", ":"),
+    ],
+    [("NAME", "self"), ("OP", "."), ("NAME", "x"), ("OP", "="), ("NAME", "x")],
+    [
+        ("NAME", "set"),
+        ("OP", "="),
+        ("NAME", "A"),
+        ("OP", "("),
+        ("OP", ")"),
+        ("OP", "."),
+        ("NAME", "set"),
+    ],
 ]
 
 
