@@ -17,3 +17,6 @@ class A:
         self.x = x
 
 set = A().set  # Also gets ignored!
+
+good = {}
+bad = {1}
