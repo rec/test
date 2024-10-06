@@ -12,7 +12,12 @@ EXPECTED_TOKENS = [
     [('NAME', 'd'), ('OP', '='), ('NAME', 'c'), ('OP', '.'), ('NAME', 'set')],
     [('NAME', 'f'), ('OP', '='), ('OP', '('), ('NAME', 'set'), ('OP', '('), ('OP', ')'), ('OP', ')')],
     [('NAME', 'e'), ('OP', '='), ('STRING', '""" set()\nset() set x.set set()\n\\""""')],
+    [('NAME', 'class'), ('NAME', 'A'), ('OP', ':')],
+    [('NAME', 'def'), ('NAME', 'set'), ('OP',  '('), ('NAME', 'self'), ('OP',  ','), ('NAME', 'x'), ('OP',  ')'), ('OP',  ':')],
+    [('NAME', 'self'), ('OP',  '.'), ('NAME', 'x'), ('OP',  '='), ('NAME', 'x')],
+    [('NAME', 'set'), ('OP',  '='), ('NAME', 'A'), ('OP',  '('), ('OP',  ')'), ('OP',  '.'), ('NAME', 'set')],
 ]
+
 
 EXPECTED_SETS = [
     (

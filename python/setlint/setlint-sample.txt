@@ -9,3 +9,11 @@ f = (
 e = """ set()
 set() set x.set set()
 \""""
+
+# From here, every mention of set is ignored
+
+class A:
+    def set(self, x):
+        self.x = x
+
+set = A().set  # Also gets ignored!
