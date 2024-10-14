@@ -2,7 +2,6 @@ import dataclasses as dc
 import functools
 import token
 from tokenize import tokenize, TokenInfo
-from typing import List
 from token_line import TokenLine
 from omitted_lines import OmittedLines
 
@@ -24,9 +23,9 @@ class TokensUsingSet:
     filename: str
 
     @functools.cached_property
-    def token_lines(self) -> List[TokenLine]:
+    def token_lines(self) -> list[TokenLine]:
         omitted = OmittedLines(self.filename)
-        token_lines: List[TokenLine] = []
+        token_lines: list[TokenLine] = []
 
         with open(self.filename, "rb") as fp:
             token_line = TokenLine()
@@ -43,8 +42,8 @@ class TokensUsingSet:
         return token_lines
 
     @functools.cached_property
-    def tokens(self) -> List[TokenInfo]:
-        tokens: List[TokenInfo] = []
+    def tokens(self) -> list[TokenInfo]:
+        tokens: list[TokenInfo] = []
         for tl in self.token_lines:
             tokens.extend(tl.tokens_using_set())
 

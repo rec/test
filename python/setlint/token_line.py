@@ -1,6 +1,6 @@
 import dataclasses as dc
 import token
-from typing import Generator, List
+from typing import Generator
 from tokenize import TokenInfo
 
 
@@ -10,7 +10,7 @@ class TokenLine:
     There might be physical newlines in it, separated by token.NL.
     """
 
-    tokens: List[TokenInfo] = dc.field(default_factory=list)
+    tokens: list[TokenInfo] = dc.field(default_factory=list)
 
     def is_token_using_set(self, i: int) -> bool:
         # This method has to be on the full line, because we look behind and ahead.
@@ -31,6 +31,6 @@ class TokenLine:
             if self.is_token_using_set(i):
                 yield t
 
-    def lines_covered(self) -> List[int]:
+    def lines_covered(self) -> list[int]:
         lines = sorted(i for t in self.tokens for i in (t.start[0], t.end[0]))
         return list(range(lines[0], lines[-1] + 1)) if lines else []

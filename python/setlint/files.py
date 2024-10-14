@@ -1,8 +1,8 @@
 from pathlib import Path
-from typing import List, Sequence, Set
+from typing import Sequence
 
 
-def python_files(include: List[str], exclude: List[str], root: str = ".") -> List[Path]:
+def python_files(include: list[str], exclude: list[str], root: str = ".") -> list[Path]:
     include = [j for i in include for j in i.split(":")]
     exclude = [j for i in exclude for j in i.split(":")]
 
@@ -12,11 +12,11 @@ def python_files(include: List[str], exclude: List[str], root: str = ".") -> Lis
     return sorted(iglobs - eglobs)
 
 
-def python_glob(root: Path, strings: Sequence[str], *, check_errors) -> Set[Path]:
-    result: Set[Path] = set()
+def python_glob(root: Path, strings: Sequence[str], *, check_errors) -> set[Path]:
+    result: set[Path] = set()
 
-    nonexistent: List[str] = []
-    not_python: List[str] = []
+    nonexistent: list[str] = []
+    not_python: list[str] = []
 
     for s in strings:
         p = root / s

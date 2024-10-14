@@ -1,10 +1,9 @@
 from token_line import TokenLine
 from tokens_using_set import TokensUsingSet
-from typing import Dict, List, Tuple
 import token
 
 
-def fix_tokens_using_set(tokens: TokensUsingSet) -> Tuple[List[str], int]:
+def fix_tokens_using_set(tokens: TokensUsingSet) -> tuple[list[str], int]:
     if not tokens.tokens:
         return [], 0
 
@@ -41,8 +40,8 @@ def _match_import(line: str) -> bool:
     )
 
 
-def _add_import(contents: List[str], tokens: TokensUsingSet):
-    lines: Dict[str, List[TokenLine]] = {}
+def _add_import(contents: list[str], tokens: TokensUsingSet):
+    lines: dict[str, list[TokenLine]] = {}
     for tl in tokens.token_lines:
         t = tl.tokens[0]
         if t.type == token.NAME:
