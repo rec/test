@@ -2,8 +2,8 @@ import dataclasses as dc
 import functools
 import token
 from tokenize import tokenize, TokenInfo
-from token_line import TokenLine
-from omitted_lines import OmittedLines
+from .token_line import TokenLine
+from .omitted_lines import OmittedLines
 
 TOKEN_TYPES = token.NAME, token.STRING, token.OP, token.NEWLINE
 

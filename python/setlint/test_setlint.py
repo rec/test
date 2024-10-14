@@ -1,5 +1,5 @@
-from tokens_using_set import TokensUsingSet
-from omitted_lines import OmittedLines
+from setlint.tokens_using_set import TokensUsingSet
+from setlint.omitted_lines import OmittedLines
 import token
 from tokenize import TokenInfo
 

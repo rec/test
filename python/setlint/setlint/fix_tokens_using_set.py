@@ -1,5 +1,5 @@
-from token_line import TokenLine
-from tokens_using_set import TokensUsingSet
+from .token_line import TokenLine
+from .tokens_using_set import TokensUsingSet
 import token
 
 
