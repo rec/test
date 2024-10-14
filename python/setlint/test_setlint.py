@@ -3,8 +3,8 @@ from setlint.omitted_lines import OmittedLines
 import token
 from tokenize import TokenInfo
 
-TESTFILE = TokensUsingSet("setlint-sample.txt")
-TESTFILE_OMITTED = TokensUsingSet("setlint-sample-omitted.txt")
+TESTFILE = TokensUsingSet("testdata/setlint-sample.txt")
+TESTFILE_OMITTED = TokensUsingSet("testdata/setlint-sample-omitted.txt")
 
 
 def test_token_lines():
