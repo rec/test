@@ -12,6 +12,9 @@ class TokenLine:
 
     tokens: list[TokenInfo] = dc.field(default_factory=list)
 
+    def append(self, t: TokenInfo) -> None:
+        self.tokens.append(t)
+
     def is_token_using_set(self, i: int) -> bool:
         # This method has to be on the full line, because we look behind and ahead.
         # This is where the logic to recognize `set` goes, and # probably most bug-fixes.

@@ -1,18 +1,18 @@
 from .token_line import TokenLine
-from .tokens_using_set import TokensUsingSet
+from .token_lines import TokenLines
 import token
 
 
-def fix_tokens_using_set(tokens: TokensUsingSet) -> tuple[list[str], int]:
-    if not tokens.tokens:
+def fix_tokens_using_set(token_lines: TokenLines) -> tuple[list[str], int]:
+    if not (tokens := list(token_lines.tokens)):
         return [], 0
 
     # First replace all the instances of set with OrderedSet
-    with open(tokens.filename) as fp:
+    with open(token_lines.filename) as fp:
         contents = fp.readlines()
 
-    reverse_tokens = sorted(tokens.tokens, key=lambda t: t.start, reverse=True)
-    for count, t in enumerate(reverse_tokens):
+    tokens.sort(key=lambda t: t.start, reverse=True)
+    for count, t in enumerate(tokens):
         (start_line, start_col), (end_line, end_col) = t.start, t.end
         assert start_line == end_line
         line = contents[start_line]
@@ -23,7 +23,7 @@ def fix_tokens_using_set(tokens: TokensUsingSet) -> tuple[list[str], int]:
 
     if not any(_match_import(line) for line in contents):
         # Add the missing import and hope that ruff puts it in the right place
-        _add_import(contents, tokens)
+        _add_import(contents, token_lines.lines)
         count += 1
 
     return contents, count
@@ -40,9 +40,9 @@ def _match_import(line: str) -> bool:
     )
 
 
-def _add_import(contents: list[str], tokens: TokensUsingSet):
+def _add_import(contents: list[str], token_lines: list[TokenLine]):
     lines: dict[str, list[TokenLine]] = {}
-    for tl in tokens.token_lines:
+    for tl in token_lines:
         t = tl.tokens[0]
         if t.type == token.NAME:
             lines.setdefault(t.string, []).append(tl)
