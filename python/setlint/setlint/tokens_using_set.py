@@ -1,9 +1,9 @@
 import dataclasses as dc
-import functools
 import token
 from tokenize import tokenize, TokenInfo
 from .token_line import TokenLine
 from .omitted_lines import OmittedLines
+from typing import Iterator
 
 TOKEN_TYPES = token.NAME, token.STRING, token.OP, token.NEWLINE
 
@@ -18,35 +18,27 @@ TODO:
 """
 
 
-@dc.dataclass
-class TokensUsingSet:
-    filename: str
+def all_token_lines(filename: str) -> Iterator[TokenLine]:
+    token_line = TokenLine()
 
-    @functools.cached_property
-    def all_token_lines(self) -> list[TokenLine]:
-        token_lines: list[TokenLine] = []
+    with open(filename, "rb") as fp:
+        for t in tokenize(fp.readline):
+            token_line.tokens.append(t)
+            if t.type == token.NEWLINE:
+                yield token_line
+                token_line = TokenLine()
 
-        with open(self.filename, "rb") as fp:
-            token_line = TokenLine()
+    if token_line.tokens:
+        yield token_line
 
-            for t in tokenize(fp.readline):
-                token_line.tokens.append(t)
-                if t.type == token.NEWLINE:
-                    token_lines.append(token_line)
-                    token_line = TokenLine()
 
-        token_lines.append(token_line)
-        return token_lines
+def token_lines(filename: str) -> Iterator[TokenLine]:
+    omitted = OmittedLines(filename)
+    for line in all_token_lines(filename):
+        if not omitted(line.lines_covered()):
+            yield line
 
-    @functools.cached_property
-    def token_lines(self) -> list[TokenLine]:
-        omitted = OmittedLines(self.filename)
-        return [t for t in self.all_token_lines if not omitted(t.lines_covered())]
 
-    @functools.cached_property
-    def tokens(self) -> list[TokenInfo]:
-        tokens: list[TokenInfo] = []
-        for tl in self.token_lines:
-            tokens.extend(tl.tokens_using_set())
-
-        return tokens
+def tokens(filename: str) -> Iterator[TokenInfo]:
+    for tl in token_lines(filename):
+        yield from tl.tokens_using_set()
