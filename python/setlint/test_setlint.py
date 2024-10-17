@@ -22,13 +22,25 @@ def test_all_sets_omitted():
 
 
 EXPECTED_SETS = [
-    TokenInfo(type=token.NAME, string='set', start=(1, 4), end=(1, 7), line='a = set()\n'),
-    TokenInfo(type=token.NAME, string='set', start=(3, 4), end=(3, 7), line='c = set\n'),
-    TokenInfo(type=token.NAME, string='set', start=(6, 3), end=(6, 6), line='   set(\n'),
+    TokenInfo(
+        type=token.NAME, string="set", start=(1, 4), end=(1, 7), line="a = set()\n"
+    ),
+    TokenInfo(
+        type=token.NAME, string="set", start=(3, 4), end=(3, 7), line="c = set\n"
+    ),
+    TokenInfo(
+        type=token.NAME, string="set", start=(6, 3), end=(6, 6), line="   set(\n"
+    ),
 ]
 
 EXPECTED_SETS_OMITTED = [
-    TokenInfo(type=token.NAME, string='set', start=(2, 4), end=(2, 7), line='a = set()\n'),
-    TokenInfo(type=token.NAME, string='set', start=(4, 4), end=(4, 7), line='c = set\n'),
-    TokenInfo(type=token.NAME, string='set', start=(8, 3), end=(8, 6), line='   set(\n'),
+    TokenInfo(
+        type=token.NAME, string="set", start=(2, 4), end=(2, 7), line="a = set()\n"
+    ),
+    TokenInfo(
+        type=token.NAME, string="set", start=(4, 4), end=(4, 7), line="c = set\n"
+    ),
+    TokenInfo(
+        type=token.NAME, string="set", start=(8, 3), end=(8, 6), line="   set(\n"
+    ),
 ]
