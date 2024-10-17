@@ -15,16 +15,18 @@ class TokenLine:
     def is_token_using_set(self, i: int) -> bool:
         # This method has to be on the full line, because we look behind and ahead.
         # This is where the logic to recognize `set` goes, and # probably most bug-fixes.
+
+        # Logic to detect sets with { would go first, if this is possible.
+
         t = self.tokens[i]
         if t.string != "set" or t.type != token.NAME:
             return False
-        elif i and self.tokens[i - 1].string in ("def", "."):
+        if i and self.tokens[i - 1].string in ("def", "."):
             return False
-        elif i >= len(self.tokens) - 1:
+        if i >= len(self.tokens) - 1:
             return True
-        else:
-            u = self.tokens[i + 1]
-            return not (u.string == "=" and u.type == token.OP)
+        u = self.tokens[i + 1]
+        return not (u.string == "=" and u.type == token.OP)
 
     def tokens_using_set(self) -> Generator[TokenInfo, None, None]:
         for i, t in enumerate(self.tokens):

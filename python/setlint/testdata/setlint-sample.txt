@@ -19,4 +19,8 @@ class A:
 set = A().set  # Also gets ignored!
 
 good = {}
-bad = {1}  # TODO: Should get caught
+good = {1: 2}
+
+bad1 = {1}
+bad2 = {'hello: there', 2}
+bad3 = [{1: {i for i in range(5)}}]
