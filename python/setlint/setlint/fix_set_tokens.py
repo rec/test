@@ -11,11 +11,13 @@ def fix_set_tokens(pf: PythonFile) -> tuple[list[str], int]:
     for t in sorted(pf.set_tokens, reverse=True, key=lambda t: t.start):
         (start_line, start_col), (end_line, end_col) = t.start, t.end
         assert start_line == end_line
-        line = lines[start_line]
+        line = lines[start_line - 1]
+        assert line == t.line
 
         a, b, c = line[:start_col], line[start_col:end_col], line[end_col:]
+        print(f"{a=}, {b=}, {c=}, {line=}")
         assert b == "set"
-        lines[start_line] = f"{a}OrderedSet{c}"
+        lines[start_line - 1] = f"{a}OrderedSet{c}"
 
     count = _add_import(lines, pf.token_lines) + len(pf.set_tokens)
     return lines, count

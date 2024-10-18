@@ -1,7 +1,10 @@
-from setlint.python_file import PythonFile
+from pathlib import Path
 from setlint.omitted_lines import OmittedLines
+from setlint.python_file import PythonFile
+from setlint import fix_set_tokens
 import token
 from tokenize import TokenInfo
+import pytest
 
 TESTFILE = "testdata/sample.py.txt"
 TESTFILE_OMITTED = "testdata/sample-omitted.py.txt"
@@ -23,6 +26,29 @@ def test_all_sets_omitted():
 
 def _token_info(start, end, line):
     return TokenInfo(type=token.NAME, string="set", start=start, end=end, line=line)
+
+
+def _fix_set_tokens(filename):
+    actual, count = fix_set_tokens.fix_set_tokens(PythonFile(filename))
+    expected_file = Path(filename + ".expected")
+    if expected_file.exists():
+        with expected_file.open() as fp:
+            expected = list(fp)
+    else:
+        expected_file.write_text("".join(actual))
+        expected = actual
+
+    return count, actual, expected
+
+
+@pytest.mark.parametrize(
+    "filename, count",
+    ((TESTFILE, 4), (TESTFILE_OMITTED, 4)),
+)
+def test_fix_set_token(filename, count):
+    actual_count, actual, expected = _fix_set_tokens(filename)
+    assert actual == expected
+    assert actual_count == count
 
 
 EXPECTED_SETS = [
