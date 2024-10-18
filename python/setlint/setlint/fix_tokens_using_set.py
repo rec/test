@@ -3,52 +3,42 @@ from .python_file import PythonFile
 import token
 
 
-def fix_tokens_using_set(token_lines: PythonFile) -> tuple[list[str], int]:
-    if not (tokens := list(token_lines.tokens)):
-        return [], 0
+def fix_set_tokens(pf: PythonFile) -> tuple[list[str], int]:
+    lines = list(pf.lines)
+    if not pf.set_tokens:
+        return lines, 0
 
-    # First replace all the instances of set with OrderedSet
-    with open(token_lines.filename) as fp:
-        contents = fp.readlines()
-
-    tokens.sort(key=lambda t: t.start, reverse=True)
-    for count, t in enumerate(tokens):
+    for t in sorted(pf.set_tokens, reverse=True, key=lambda t: t.start):
         (start_line, start_col), (end_line, end_col) = t.start, t.end
         assert start_line == end_line
-        line = contents[start_line]
+        line = lines[start_line]
 
         a, b, c = line[:start_col], line[start_col:end_col], line[end_col:]
         assert b == "set"
-        contents[start_line] = f"{a}OrderedSet{c}"
+        lines[start_line] = f"{a}OrderedSet{c}"
 
-    if not any(_is_ordered_set_import(line) for line in contents):
-        # Add the missing import and hope that ruff puts it in the right place
-        _add_import(contents, token_lines.token_lines)
-        count += 1
-
-    return contents, count
+    count = _add_import(lines, pf.token_lines) + len(pf.set_tokens)
+    return lines, count
 
 
-def _is_ordered_set_import(line: str) -> bool:
-    parts = [j for i in line.split() for j in i.split(".") if j]
-    return (
-        bool(parts)
-        and parts[0] == "from"
-        and parts[-1] == "OrderedSet"
-        and "import" in parts
-        and "utils" in parts
-    )
-
-
-def _add_import(contents: list[str], token_lines: list[TokenLine]):
-    lines: dict[str, list[TokenLine]] = {}
+def _add_import(lines: list[str], token_lines: list[TokenLine]) -> int:
+    entries: dict[str, list[TokenLine]] = {"from": [], "comment": [], "import": []}
     for tl in token_lines:
         t = tl.tokens[0]
-        if t.type == token.NAME:
-            lines.setdefault(t.string, []).append(tl)
+        if t.type == token.INDENT:
+            break
+        elif t.type == token.COMMENT:
+            entries["comments"].append(tl)
+        elif not (t.type == token.NAME and t.string in ("from", "import")):
+            continue
+        elif any(i.type == token.NAME and i.string == "OrderedSet" for i in tl.tokens):
+            return 0
+        else:
+            entries[t.string].append(tl)
 
-
-"""
-            lasts[tl[0].string] = tl
-    froms = [tl for tl in tokens.token_lines if accept(tl, 'from')]
-    """
+    if imps := entries["from"] or entries["import"] or entries["comment"]:
+        insert_before = imps[-1].tokens[-1].start[0] + 1
+    else:
+        insert_before = 0
+    lines.insert(insert_before, "from torch.utils._ordered_set import OrderedSet\n")
+    return 1

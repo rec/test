@@ -1,6 +1,6 @@
 import dataclasses as dc
 import token
-from typing import Generator
+from typing import Iterable
 from tokenize import TokenInfo
 
 
@@ -31,7 +31,8 @@ class TokenLine:
         u = self.tokens[i + 1]
         return not (u.string == "=" and u.type == token.OP)
 
-    def tokens_using_set(self) -> Generator[TokenInfo, None, None]:
+    def matching_tokens(self) -> Iterable[TokenInfo]:
+        """Matches tokens which use the built-in set"""
         for i, t in enumerate(self.tokens):
             if self.is_token_using_set(i):
                 yield t

@@ -13,22 +13,25 @@ really `set` or, say, a method `set`.
 
 class PythonFile:
     filename: str
-    token_lines: list[TokenLine]
+    lines: list[str]
     tokens: list[TokenInfo]
+    token_lines: list[TokenLine]
+    set_tokens: list[TokenInfo]
 
     def __init__(self, filename: str) -> None:
         self.filename = filename
-        self.token_lines = [TokenLine()]
+        with open(filename) as fp:
+            self.lines = fp.readlines()
 
         with open(filename, "rb") as fp:
-            for t in tokenize(fp.readline):
-                self.token_lines[-1].append(t)
-                if t.type == token.NEWLINE:
-                    self.token_lines.append(TokenLine())
+            self.tokens = list(tokenize(fp.readline))
+
+        self.token_lines = [TokenLine()]
+        for t in self.tokens:
+            self.token_lines[-1].append(t)
+            if t.type == token.NEWLINE:
+                self.token_lines.append(TokenLine())
 
         omitted = OmittedLines(filename)
-        self.tokens = []
-
-        for line in self.token_lines:
-            if not omitted(line.lines_covered()):
-                self.tokens.extend(line.tokens_using_set())
+        lines = [tl for tl in self.token_lines if not omitted(tl)]
+        self.set_tokens = [t for tl in lines for t in tl.matching_tokens()]

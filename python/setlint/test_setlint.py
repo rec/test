@@ -8,7 +8,7 @@ TESTFILE_OMITTED = "testdata/sample-omitted.py.txt"
 
 
 def test_get_all_tokens():
-    assert EXPECTED_SETS == PythonFile(TESTFILE).tokens
+    assert EXPECTED_SETS == PythonFile(TESTFILE).set_tokens
 
 
 def test_omitted_lines():
@@ -18,7 +18,7 @@ def test_omitted_lines():
 
 
 def test_all_sets_omitted():
-    assert EXPECTED_SETS_OMITTED == PythonFile(TESTFILE_OMITTED).tokens
+    assert EXPECTED_SETS_OMITTED == PythonFile(TESTFILE_OMITTED).set_tokens
 
 
 EXPECTED_SETS = [
