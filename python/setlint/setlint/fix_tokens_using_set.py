@@ -1,9 +1,9 @@
 from .token_line import TokenLine
-from .token_lines import TokenLines
+from .python_file import PythonFile
 import token
 
 
-def fix_tokens_using_set(token_lines: TokenLines) -> tuple[list[str], int]:
+def fix_tokens_using_set(token_lines: PythonFile) -> tuple[list[str], int]:
     if not (tokens := list(token_lines.tokens)):
         return [], 0
 
@@ -23,7 +23,7 @@ def fix_tokens_using_set(token_lines: TokenLines) -> tuple[list[str], int]:
 
     if not any(_is_ordered_set_import(line) for line in contents):
         # Add the missing import and hope that ruff puts it in the right place
-        _add_import(contents, token_lines.lines)
+        _add_import(contents, token_lines.token_lines)
         count += 1
 
     return contents, count

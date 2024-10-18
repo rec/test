@@ -1,4 +1,4 @@
-from setlint.token_lines import TokenLines
+from setlint.python_file import PythonFile
 from setlint.omitted_lines import OmittedLines
 import token
 from tokenize import TokenInfo
@@ -8,7 +8,7 @@ TESTFILE_OMITTED = "testdata/sample-omitted.py.txt"
 
 
 def test_get_all_tokens():
-    assert EXPECTED_SETS == TokenLines(TESTFILE).tokens
+    assert EXPECTED_SETS == PythonFile(TESTFILE).tokens
 
 
 def test_omitted_lines():
@@ -18,7 +18,7 @@ def test_omitted_lines():
 
 
 def test_all_sets_omitted():
-    assert EXPECTED_SETS_OMITTED == TokenLines(TESTFILE_OMITTED).tokens
+    assert EXPECTED_SETS_OMITTED == PythonFile(TESTFILE_OMITTED).tokens
 
 
 EXPECTED_SETS = [

@@ -11,24 +11,24 @@ really `set` or, say, a method `set`.
 """
 
 
-class TokenLines:
+class PythonFile:
     filename: str
-    lines: list[TokenLine]
+    token_lines: list[TokenLine]
     tokens: list[TokenInfo]
 
     def __init__(self, filename: str) -> None:
         self.filename = filename
-        self.lines = [TokenLine()]
+        self.token_lines = [TokenLine()]
 
         with open(filename, "rb") as fp:
             for t in tokenize(fp.readline):
-                self.lines[-1].append(t)
+                self.token_lines[-1].append(t)
                 if t.type == token.NEWLINE:
-                    self.lines.append(TokenLine())
+                    self.token_lines.append(TokenLine())
 
         omitted = OmittedLines(filename)
         self.tokens = []
 
-        for line in self.lines:
+        for line in self.token_lines:
             if not omitted(line.lines_covered()):
                 self.tokens.extend(line.tokens_using_set())
