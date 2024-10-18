@@ -21,26 +21,18 @@ def test_all_sets_omitted():
     assert EXPECTED_SETS_OMITTED == PythonFile(TESTFILE_OMITTED).set_tokens
 
 
+def _token_info(start, end, line):
+    return TokenInfo(type=token.NAME, string="set", start=start, end=end, line=line)
+
+
 EXPECTED_SETS = [
-    TokenInfo(
-        type=token.NAME, string="set", start=(1, 4), end=(1, 7), line="a = set()\n"
-    ),
-    TokenInfo(
-        type=token.NAME, string="set", start=(3, 4), end=(3, 7), line="c = set\n"
-    ),
-    TokenInfo(
-        type=token.NAME, string="set", start=(6, 3), end=(6, 6), line="   set(\n"
-    ),
+    _token_info((1, 4), (1, 7), "a = set()\n"),
+    _token_info((3, 4), (3, 7), "c = set\n"),
+    _token_info((6, 3), (6, 6), "   set(\n"),
 ]
 
 EXPECTED_SETS_OMITTED = [
-    TokenInfo(
-        type=token.NAME, string="set", start=(2, 4), end=(2, 7), line="a = set()\n"
-    ),
-    TokenInfo(
-        type=token.NAME, string="set", start=(4, 4), end=(4, 7), line="c = set\n"
-    ),
-    TokenInfo(
-        type=token.NAME, string="set", start=(8, 3), end=(8, 6), line="   set(\n"
-    ),
+    _token_info((2, 4), (2, 7), "a = set()\n"),
+    _token_info((4, 4), (4, 7), "c = set\n"),
+    _token_info((8, 3), (8, 6), "   set(\n"),
 ]
