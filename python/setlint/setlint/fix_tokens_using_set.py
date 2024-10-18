@@ -21,7 +21,7 @@ def fix_tokens_using_set(token_lines: TokenLines) -> tuple[list[str], int]:
         assert b == "set"
         contents[start_line] = f"{a}OrderedSet{c}"
 
-    if not any(_match_import(line) for line in contents):
+    if not any(_is_ordered_set_import(line) for line in contents):
         # Add the missing import and hope that ruff puts it in the right place
         _add_import(contents, token_lines.lines)
         count += 1
@@ -29,14 +29,14 @@ def fix_tokens_using_set(token_lines: TokenLines) -> tuple[list[str], int]:
     return contents, count
 
 
-def _match_import(line: str) -> bool:
-    p = [j for i in line.split() for j in i.split(".") if j]
+def _is_ordered_set_import(line: str) -> bool:
+    parts = [j for i in line.split() for j in i.split(".") if j]
     return (
-        bool(p)
-        and p[0] == "from"
-        and p[-1] == "OrderedSet"
-        and "import" in p
-        and "utils" in p
+        bool(parts)
+        and parts[0] == "from"
+        and parts[-1] == "OrderedSet"
+        and "import" in parts
+        and "utils" in parts
     )
 
 
@@ -46,9 +46,9 @@ def _add_import(contents: list[str], token_lines: list[TokenLine]):
         t = tl.tokens[0]
         if t.type == token.NAME:
             lines.setdefault(t.string, []).append(tl)
-    """
-    lasts = {tl[0].string: tl for tl in lines[]
 
+
+"""
             lasts[tl[0].string] = tl
     froms = [tl for tl in tokens.token_lines if accept(tl, 'from')]
     """
