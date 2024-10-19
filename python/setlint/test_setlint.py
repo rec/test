@@ -8,6 +8,8 @@ import pytest
 
 TESTFILE = "testdata/sample.py.txt"
 TESTFILE_OMITTED = "testdata/sample-omitted.py.txt"
+INCLUDES_FILE = "testdata/includes.py.txt"
+INCLUDES_FILE2 = "testdata/includes2.py.txt"
 
 
 def test_get_all_tokens():
@@ -43,7 +45,12 @@ def _fix_set_tokens(filename):
 
 @pytest.mark.parametrize(
     "filename, count",
-    ((TESTFILE, 4), (TESTFILE_OMITTED, 4)),
+    (
+        (TESTFILE, 4),
+        (TESTFILE_OMITTED, 4),
+        (INCLUDES_FILE, 1),
+        (INCLUDES_FILE2, 2),
+    ),
 )
 def test_fix_set_token(filename, count):
     actual_count, actual, expected = _fix_set_tokens(filename)
