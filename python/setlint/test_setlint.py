@@ -1,6 +1,5 @@
 from pathlib import Path
-from setlint.omitted_lines import OmittedLines
-from setlint.python_file import PythonFile
+from setlint.python_file import OmittedLines, PythonFile
 from setlint import fix_set_tokens
 import token
 from tokenize import TokenInfo
@@ -35,7 +34,7 @@ def _fix_set_tokens(filename):
     expected_file = Path(filename + ".expected")
     if expected_file.exists():
         with expected_file.open() as fp:
-            expected = list(fp)
+            expected = fp.readlines()
     else:
         expected_file.write_text("".join(actual))
         expected = actual

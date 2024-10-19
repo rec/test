@@ -1,7 +1,8 @@
 import token
 from tokenize import tokenize, TokenInfo
 from .token_line import TokenLine
-from .omitted_lines import OmittedLines
+
+OMIT_COMMENT = "# noqa: setlint"
 
 """
 Python's tokenizer splits Python code into lexical tokens tagged with one of many
@@ -35,3 +36,17 @@ class PythonFile:
         omitted = OmittedLines(filename)
         lines = [tl for tl in self.token_lines if not omitted(tl)]
         self.set_tokens = [t for tl in lines for t in tl.matching_tokens()]
+
+
+class OmittedLines:
+    def __init__(self, filename: str) -> None:
+        self.filename = filename
+        self.lines = set()
+        with open(self.filename) as fp:
+            for i, s in enumerate(fp):
+                if s.rstrip().endswith(OMIT_COMMENT):
+                    self.lines.add(i + 1)  # Tokenizer lines start at 1
+
+    def __call__(self, tl: TokenLine) -> bool:
+        # A TokenLine might span multiple physical lines
+        return bool(self.lines.intersection(tl.lines_covered()))

@@ -2,7 +2,9 @@ from pathlib import Path
 from typing import Sequence
 
 
-def python_files(include: list[str], exclude: list[str], root: str = ".") -> list[Path]:
+def resolve_python_files(
+    include: list[str], exclude: list[str], root: str = "."
+) -> list[Path]:
     include = [j for i in include for j in i.split(":")]
     exclude = [j for i in exclude for j in i.split(":")]
 

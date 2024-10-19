@@ -1,6 +1,5 @@
 import argparse
 import json
-from typing import Sequence
 
 
 def add_configs(args: argparse.Namespace, filename: str) -> argparse.Namespace:
@@ -24,12 +23,6 @@ def add_configs(args: argparse.Namespace, filename: str) -> argparse.Namespace:
     return args
 
 
-def get_files(args: argparse.Namespace) -> Sequence[str]:
-    if args.files:
-        return args.files
-    raise NotImplementedError
-
-
 def make_parser() -> argparse.ArgumentParser:
     class HelpFormatter(argparse.HelpFormatter):
         def __init__(self, prog, indent_increment=4, max_help_position=16, width=None):
@@ -38,9 +31,11 @@ def make_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(formatter_class=HelpFormatter)
     add = parser.add_argument
 
-    add("files", nargs="*", help="Files or directories to exclude")
-    add("-e", "--exclude", action="append", help="Files to check.")
+    add("files", nargs="*", help="Files or directories to include")
+    add("-e", "--exclude", action="append", help="Files to exclude from the check")
     add("-f", "--fix", default=None, action="store_true", help="Fix any issues")
+    add("-v", "--verbose", default=None, action="store_true", help="Print more info")
+
     return parser
 
 
