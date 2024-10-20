@@ -6,7 +6,7 @@ def resolve_python_files(
     include: list[str], exclude: list[str], root: str = "."
 ) -> list[Path]:
     include = [j for i in include for j in i.split(":")]
-    exclude = [j for i in exclude for j in i.split(":")]
+    exclude = [j for i in exclude or () for j in i.split(":")]
 
     iglobs = python_glob(Path(root), include, check_errors=True)
     eglobs = python_glob(Path(root), exclude, check_errors=False)

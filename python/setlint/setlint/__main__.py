@@ -12,7 +12,10 @@ def main():
         sys.exit("No files selected")
 
     for f in python_files:
-        lint_file(f)
+        if not True:
+            print(f)
+        else:
+            lint_file(f, args)
 
 
 if __name__ == "__main__":

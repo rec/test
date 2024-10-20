@@ -31,7 +31,7 @@ def _token_info(start, end, line):
 
 def _fix_set_tokens(filename):
     pf = PythonFile(filename)
-    count = fix_set_tokens.fix_set_tokens(pf)
+    fix_set_tokens.fix_set_tokens(pf)
     expected_file = Path(filename + ".expected")
     if expected_file.exists():
         with expected_file.open() as fp:
@@ -40,22 +40,16 @@ def _fix_set_tokens(filename):
         expected_file.write_text("".join(pf.lines))
         expected = pf.lines
 
-    return count, pf.lines, expected
+    return pf.lines, expected
 
 
 @pytest.mark.parametrize(
-    "filename, count",
-    (
-        (TESTFILE, 4),
-        (TESTFILE_OMITTED, 4),
-        (INCLUDES_FILE, 1),
-        (INCLUDES_FILE2, 2),
-    ),
+    "filename",
+    (TESTFILE, TESTFILE_OMITTED, INCLUDES_FILE, INCLUDES_FILE2),
 )
-def test_fix_set_token(filename, count):
-    actual_count, actual, expected = _fix_set_tokens(filename)
+def test_fix_set_token(filename):
+    actual, expected = _fix_set_tokens(filename)
     assert actual == expected
-    assert actual_count == count
 
 
 EXPECTED_SETS = [

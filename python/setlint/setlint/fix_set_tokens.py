@@ -4,9 +4,9 @@ from token import COMMENT, INDENT, NAME
 IMPORT_LINE = "from torch.utils._ordered_set import OrderedSet\n"
 
 
-def fix_set_tokens(pf: PythonFile) -> int:
+def fix_set_tokens(pf: PythonFile) -> None:
     _fix_tokens(pf)
-    return _add_import(pf) + len(pf.set_tokens)
+    _add_import(pf)
 
 
 def _fix_tokens(pf: PythonFile) -> None:
@@ -14,17 +14,15 @@ def _fix_tokens(pf: PythonFile) -> None:
         (start_line, start_col), (end_line, end_col) = t.start, t.end
         assert start_line == end_line
         line = pf.lines[start_line - 1]
-        assert line == t.line
 
         a, b, c = line[:start_col], line[start_col:end_col], line[end_col:]
-        print(f"{a=}, {b=}, {c=}, {line=}")
-        assert b == "set"
+        assert b in ("set", "Set")
         pf.lines[start_line - 1] = f"{a}OrderedSet{c}"
 
 
-def _add_import(pf: PythonFile) -> int:
+def _add_import(pf: PythonFile) -> None:
     if not pf.set_tokens:
-        return 0
+        return
 
     froms, comments, imports = [], [], []
 
@@ -36,7 +34,7 @@ def _add_import(pf: PythonFile) -> int:
             comments.append(tl)
         elif t.type == NAME and t.string in ("from", "import"):
             if any(i.type == NAME and i.string == "OrderedSet" for i in tl.tokens):
-                return 0
+                return
             elif t.string == "from":
                 froms.append(tl)
             else:
@@ -47,4 +45,3 @@ def _add_import(pf: PythonFile) -> int:
     else:
         insert_before = 0
     pf.lines.insert(insert_before, IMPORT_LINE)
-    return 1

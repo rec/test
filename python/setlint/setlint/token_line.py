@@ -1,5 +1,5 @@
 import dataclasses as dc
-import token
+from token import NAME, OP
 from typing import Iterable
 from tokenize import TokenInfo
 
@@ -15,21 +15,25 @@ class TokenLine:
     def append(self, t: TokenInfo) -> None:
         self.tokens.append(t)
 
+    def __repr__(self) -> str:
+        return " ".join(t.string for t in self.tokens)
+
     def is_token_using_set(self, i: int) -> bool:
         # This method has to be on the full line, because we look behind and ahead.
         # This is where the logic to recognize `set` goes, and # probably most bug-fixes.
 
         # Logic to detect sets with { would go first, if this is possible.
 
+        s = i and self.tokens[i - 1]
         t = self.tokens[i]
-        if t.string != "set" or t.type != token.NAME:
+        u = i < len(self.tokens) - 1 and self.tokens[i + 1]
+        if t.string == "Set" and t.type == NAME:
+            return u and u.string == "[" and u.type == OP
+        if not (t.string == "set" and t.type == NAME):
             return False
-        if i and self.tokens[i - 1].string in ("def", "."):
+        if s and s.string in ("def", "."):
             return False
-        if i >= len(self.tokens) - 1:
-            return True
-        u = self.tokens[i + 1]
-        return not (u.string == "=" and u.type == token.OP)
+        return not (u and u.string == "=" and u.type == OP)
 
     def matching_tokens(self) -> Iterable[TokenInfo]:
         """Matches tokens which use the built-in set"""
