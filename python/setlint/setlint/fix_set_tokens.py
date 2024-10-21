@@ -30,13 +30,13 @@ def _add_import(pf: PythonFile) -> None:
     for tl in pf.token_lines:
         t = tl.tokens[0]
         if t.type == INDENT:
-            DEBUG and print('INDENT', tl)
+            DEBUG and print("INDENT", tl)
             break
         elif t.type == COMMENT:
-            DEBUG and print('COMMENT', tl)
+            DEBUG and print("COMMENT", tl)
             comments.append(tl)
         elif t.type == NAME and t.string in ("from", "import"):
-            print('import', tl)
+            DEBUG and print("import", tl)
             if any(i.type == NAME and i.string == "OrderedSet" for i in tl.tokens):
                 return
             elif t.string == "from":
@@ -44,7 +44,7 @@ def _add_import(pf: PythonFile) -> None:
             else:
                 imports.append(tl)
         else:
-            DEBUG and print('other', t)
+            DEBUG and print("other", t)
 
     if section := froms or imports or comments:
         insert_before = section[-1].tokens[-1].start[0] + 1
