@@ -2,6 +2,7 @@ from .python_file import PythonFile
 from token import COMMENT, INDENT, NAME
 
 IMPORT_LINE = "from torch.utils._ordered_set import OrderedSet\n"
+DEBUG = False
 
 
 def fix_set_tokens(pf: PythonFile) -> None:
@@ -29,16 +30,21 @@ def _add_import(pf: PythonFile) -> None:
     for tl in pf.token_lines:
         t = tl.tokens[0]
         if t.type == INDENT:
+            DEBUG and print('INDENT', tl)
             break
         elif t.type == COMMENT:
+            DEBUG and print('COMMENT', tl)
             comments.append(tl)
         elif t.type == NAME and t.string in ("from", "import"):
+            print('import', tl)
             if any(i.type == NAME and i.string == "OrderedSet" for i in tl.tokens):
                 return
             elif t.string == "from":
                 froms.append(tl)
             else:
                 imports.append(tl)
+        else:
+            DEBUG and print('other', t)
 
     if section := froms or imports or comments:
         insert_before = section[-1].tokens[-1].start[0] + 1
