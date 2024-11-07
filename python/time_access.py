@@ -9,11 +9,10 @@ def time_in(container, item):
 print('|     i  |       set       |    OrderedSet   |      tuple      |')
 print('|        |  hit   |  miss  |   hit  |  miss  |   hit  |  miss  |')
 
-for i in (0, 1, 2, 3, 4, 5, 6, 7, 8, 16, 64, 256):
+for i in (0, 1, 4, 8, 12, 16, 20, 64, 256):
     s = set(str(j) for j in range(i))
-    os = OrderedSet(str(j) for j in range(i))
+    os = OrderedSet(s)
     t = tuple(s)
-    missing = str(-1)
 
     if i:
         middle = t[i // 2]
@@ -23,6 +22,7 @@ for i in (0, 1, 2, 3, 4, 5, 6, 7, 8, 16, 64, 256):
     else:
         hit_s = hit_os = hit_t = 6 * ' '
 
+    missing = str(-1)
     miss_s = time_in(s, missing)
     miss_os = time_in(os, missing)
     miss_t = time_in(t, missing)
