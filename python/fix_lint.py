@@ -2,8 +2,9 @@ import fileinput
 import re
 
 START_OF_FILE = re.compile(r'>>>\s+Lint for (.*\.py):\s*')
-START_OF_ERROR = re.compile(r'\s*Error \([A-Z_]+\) .*')
-ERROR_LINE = re.compile(r'\s*>>>\s*(\d+)  \|  .*')
+START_OF_ERROR = re.compile(r'\s*(Error|Warning) \([A-Z_]+\) .*')
+ERROR_LINE = re.compile(r'\s*>>>\s*(\d+)(\s*)\|.*')
+
 
 def pr(*a):
     if False:
@@ -20,16 +21,16 @@ def fix_lint():
 
     for line in fileinput.input():
         if m := START_OF_FILE.match(line):
-            pr(' --> START_OF_FILE')
+            pr(' --> START_OF_FILE', line)
             print_stack()
             filename = m.group(1)
             print(line, end='')
         elif START_OF_ERROR.match(line):
-            pr(' --> START_OF_ERROR')
+            pr(' --> START_OF_ERROR', line)
             print_stack()
             stack.append(line)
         elif m := ERROR_LINE.match(line):
-            pr(' --> ERROR_LINE')
+            pr(' --> ERROR_LINE', line)
             lineno = int(m.group(1))
             print(f'{filename}:{lineno}:')
             print()
@@ -37,7 +38,7 @@ def fix_lint():
             print_stack()
         elif stack:
             stack.append(line)
-            pr(' --> APPEND')
+            pr(' --> APPEND', line)
         else:
             print(line, end='')
 
