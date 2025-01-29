@@ -47,16 +47,14 @@ def list_imports(tokens) -> Iterator[str]:
 
 def split_import(line):
     fr, _, im = line.partition('import')
-    if fr:
-        fr, base = fr.split()
-        assert fr == "from"
-    else:
-        base = ""
     im = im.replace("(", "").replace(")", "")
     parts = [p.split()[0] for p in im.split(",")]
 
-    return base, parts
-
+    if not fr:
+        return parts
+    fr, _, rest = fr.strip().partition("from ")
+    assert not fr
+    return [f"{rest}.{p}" for p in parts]
 
 
 if __name__ == '__main__':
@@ -65,4 +63,5 @@ if __name__ == '__main__':
         with open(i) as fp:
             tokens = list(generate_tokens(fp.readline))
             for i in list_imports(tokens):
-                print(split_import(i))
+                for ip in split_import(i):
+                    print(ip)

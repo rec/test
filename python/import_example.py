@@ -7,3 +7,5 @@ from six import (
 )
 
 from ten.eleven import twelve as zero, five as thirteen
+
+from .ir import three, nine, nine
