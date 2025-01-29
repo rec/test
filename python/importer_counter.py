@@ -33,7 +33,7 @@ def join_lines(tokens):
     lines = []
     for t in tokens:
         if t.start[0] != lineno:
-            lines.append(t.line)
+            lines.append(t.line.partition("#")[0])
             lineno = t.start[0]
     return " ".join("".join(lines).split()).strip()
 
@@ -45,10 +45,24 @@ def list_imports(tokens) -> Iterator[str]:
             yield join_lines(tl)
 
 
+def split_import(line):
+    fr, _, im = line.partition('import')
+    if fr:
+        fr, base = fr.split()
+        assert fr == "from"
+    else:
+        base = ""
+    im = im.replace("(", "").replace(")", "")
+    parts = [p.split()[0] for p in im.split(",")]
+
+    return base, parts
+
+
+
 if __name__ == '__main__':
     for i in sys.argv[1:]:
         print(f"{i}:")
         with open(i) as fp:
             tokens = list(generate_tokens(fp.readline))
             for i in list_imports(tokens):
-                print(i)
+                print(split_import(i))
