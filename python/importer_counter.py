@@ -8,7 +8,7 @@ from typing import Iterator
 
 
 def import_lines(tokens) -> Iterator[str]:
-    it = [t for t in tokens if t.type not in (token.COMMENT, token.NL)]
+    it = (t for t in tokens if t.type not in (token.COMMENT, token.NL))
     for _, i in itertools.groupby(it, lambda t: t.type == token.NEWLINE):
         token_list = list(i)
         t = token_list and token_list[0]
@@ -34,19 +34,15 @@ def split_import(line):
     return parts
 
 
-def all_python_files(path: Path, python_root=None):
+def all_python_files(path: str, prefix=None, python_root=None):
     result = {}
     python_root = python_root or Path(".")
+    path = Path(path)
     path = path.relative_to(python_root)
     if path.suffix == ".py":
         paths = [path]
     else:
         paths = sorted(path.glob("**/*.py"))
-
-    if path == python_root:
-        path_prefix = ""
-    else:
-        path_prefix = str(path).strip("/").replace("/", ".") + "."
 
     def bucket(it):
         result = {}
@@ -55,29 +51,28 @@ def all_python_files(path: Path, python_root=None):
         return result
 
     result = bucket((mp, i) for f in paths for mp, i in one_file(f))
-    result = {k: [i for i in v if i.startswith(path_prefix)] for k, v in result.items()}
+    if prefix:
+        result = {k: [i for i in v if i.startswith(prefix)] for k, v in result.items()}
     inverse = bucket((i, k) for k, v in result.items() for i in v)
     print(json.dumps([result, inverse], indent=2, sort_keys=True))
 
 
 def one_file(f):
-    module_path = [i.name for i in reversed(f.parents)]
+    module_path = [i.name for i in reversed(f.parents) if i.name]
     if any('.' in i for i in module_path):
         return
-    mp = ".".join(module_path + [f.name])
+    mp = ".".join(module_path + [f.stem])
 
     with f.open() as fp:
         tokens = list(generate_tokens(fp.readline))
 
-    print(list(import_lines(tokens)))
     for line in import_lines(tokens):
         for imp in split_import(line):
             simp = imp.lstrip(".")
             if diff := len(imp) - len(simp):
-                imp = ".".join(module_path[1:(1 - diff) or None] + [simp])
+                imp = ".".join(module_path[:(1 - diff) or None] + [simp])
             yield mp, imp
 
 
 if __name__ == '__main__':
-    for i in sys.argv[1:]:
-        all_python_files(Path(i))
+     all_python_files(*sys.argv[1:])
