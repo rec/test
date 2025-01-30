@@ -34,7 +34,7 @@ def split_import(line):
     return parts
 
 
-def all_python_files(path: str, prefix=None, python_root=None):
+def all_python_files(path: str, prefix="", python_root=None):
     result = {}
     python_root = python_root or Path(".")
     path = Path(path)
@@ -50,14 +50,24 @@ def all_python_files(path: str, prefix=None, python_root=None):
             result.setdefault(k, []).append(v)
         return result
 
-    result = bucket((mp, i) for f in paths for mp, i in one_file(f))
-    if prefix:
-        result = {k: [i for i in v if i.startswith(prefix)] for k, v in result.items()}
+    imports = bucket((mp, i) for f in paths for mp, i in one_file(f))
+    imports = {k: [i for i in v if i.startswith(prefix)] for k, v in imports.items()}
+
+    inverse = {}
+    for importer, imps in imports.items():
+        for i in imps:
+            if i in imports:
+                module, symbol = i, ""
+            else:
+                module, _, symbol = i.rpartition(".")
+
+
     inverse = bucket((i, k) for k, v in result.items() for i in v)
     print(json.dumps([result, inverse], indent=2, sort_keys=True))
 
 
 def one_file(f):
+    # TODO: deal with __init__.py
     module_path = [i.name for i in reversed(f.parents) if i.name]
     if any('.' in i for i in module_path):
         return
