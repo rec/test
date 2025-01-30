@@ -1,11 +1,11 @@
-import os
-import sys, token
+import json
+import sys
+import token
 from pathlib import Path
 from tokenize import generate_tokens, TokenInfo
 from typing import Iterator
 
 def token_lines(tokens) -> list[list[TokenInfo]]:
-    """Returns lists of TokenInfo segmented by token.NEWLINE"""
     token_lines: list[list[TokenInfo]] = [[]]
 
     for t in tokens:
@@ -50,27 +50,48 @@ def split_import(line):
     return [f"{rest}.{p}" for p in parts]
 
 
+def bucket(it):
+    result = {}
+    for k, v in it:
+        result.setdefault(k, []).append(v)
+    return result
+
+
 def all_python_files(path: Path, python_root=None):
+    result = {}
     python_root = python_root or Path(".")
+    path = path.relative_to(python_root)
     if path.suffix == ".py":
         paths = [path]
     else:
-        paths  = sorted(path.glob("**/*.py"))
-    for f in paths:
-        f = f.relative_to(python_root)
-        module_path = [i.name for i in reversed(f.parents)][1:]
-        if any('.' in i for i in module_path):
-            continue
+        paths = sorted(path.glob("**/*.py"))
 
-        with f.open() as fp:
-            tokens = list(generate_tokens(fp.readline))
+    if path == python_root:
+        path_prefix = ""
+    else:
+        path_prefix = str(path).strip("/").replace("/", ".") + "."
 
-        for imp in list_imports(tokens):
-            for i in split_import(imp):
-                simp = i.lstrip(".")
-                if diff := len(i) - len(simp):
-                    i = ".".join(module_path[:(1 - diff) or None] + [simp])
-                print(f, i)
+    result = bucket((mp, i) for f in paths for mp, i in one_file(f))
+    result = {k: [i for i in v if i.startswith(path_prefix)] for k, v in result.items()}
+    inverse = bucket((i, k) for k, v in result.items() for i in v)
+    print(json.dumps([result, inverse], indent=2, sort_keys=True))
+
+
+def one_file(f):
+    module_path = [i.name for i in reversed(f.parents)]
+    if any('.' in i for i in module_path):
+        return
+    mp = ".".join(module_path)
+
+    with f.open() as fp:
+        tokens = list(generate_tokens(fp.readline))
+
+    for imp in list_imports(tokens):
+        for i in split_import(imp):
+            simp = i.lstrip(".")
+            if diff := len(i) - len(simp):
+                i = ".".join(module_path[1:(1 - diff) or None] + [simp])
+            yield mp, i
 
 
 if __name__ == '__main__':
