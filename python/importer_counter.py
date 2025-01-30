@@ -20,8 +20,10 @@ def import_lines(tokens) -> Iterator[str]:
 def split_import(line):
     if "*" in line:
         return []
-
-    before, _, after = line.partition('import')
+    words = line.split()
+    loc = words.index("import")
+    before = " ".join(words[0:loc])
+    after = " ".join(words[loc + 1:])
     assert after, line
     after = after.replace("(", "").replace(")", "").strip()
     parts = [ps.split()[0] for p in after.split(",") if (ps := p.strip())]
@@ -60,18 +62,17 @@ def all_python_files(path: str, prefix="", python_root=None):
                 module, symbol = i, ""
             else:
                 module, _, symbol = i.rpartition(".")
+            inverse.setdefault(module, {}).setdefault(symbol, []).append(importer)
 
-
-    inverse = bucket((i, k) for k, v in result.items() for i in v)
-    print(json.dumps([result, inverse], indent=2, sort_keys=True))
+    result = {"importer": imports, "inverse": inverse}
+    print(json.dumps(result, indent=2, sort_keys=True))
 
 
 def one_file(f):
-    # TODO: deal with __init__.py
     module_path = [i.name for i in reversed(f.parents) if i.name]
     if any('.' in i for i in module_path):
         return
-    mp = ".".join(module_path + [f.stem])
+    mp = ".".join(module_path + (f.stem != "__init__") * [f.stem])
 
     with f.open() as fp:
         tokens = list(generate_tokens(fp.readline))
