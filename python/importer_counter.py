@@ -59,7 +59,7 @@ def all_python_files(path: str, prefix="", python_root=None):
     for file, imports in file_to_imports.items():
         for i in imports:
             if i in file_to_imports:
-                module, symbol = i, ""
+                module, symbol = i, "(module)"
             else:
                 module, _, symbol = i.rpartition(".")
             imports_to_files.setdefault(module, {}).setdefault(symbol, []).append(file)
@@ -79,7 +79,7 @@ def all_python_files(path: str, prefix="", python_root=None):
     sum2 = sort_by_value(sum2)
     sum1 = {k: sum1[k] for k in sum2}
 
-    result = [sum2, sum1, file_to_imports, imports_to_files]
+    result = [sum2, sum1, imports_to_files]
     print(json.dumps(result, indent=2, sort_keys=False))
 
 
