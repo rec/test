@@ -52,20 +52,35 @@ def all_python_files(path: str, prefix="", python_root=None):
             result.setdefault(k, []).append(v)
         return result
 
-    imports = bucket((mp, i) for f in paths for mp, i in one_file(f))
-    imports = {k: [i for i in v if i.startswith(prefix)] for k, v in imports.items()}
+    it = bucket((mp, i) for f in paths for mp, i in one_file(f)).items()
+    file_to_imports = {k: sorted(i for i in v if i.startswith(prefix)) for k, v in it}
 
-    inverse = {}
-    for importer, imps in imports.items():
-        for i in imps:
-            if i in imports:
+    imports_to_files = {}
+    for file, imports in file_to_imports.items():
+        for i in imports:
+            if i in file_to_imports:
                 module, symbol = i, ""
             else:
                 module, _, symbol = i.rpartition(".")
-            inverse.setdefault(module, {}).setdefault(symbol, []).append(importer)
+            imports_to_files.setdefault(module, {}).setdefault(symbol, []).append(file)
 
-    result = {"importer": imports, "inverse": inverse}
-    print(json.dumps(result, indent=2, sort_keys=True))
+    for i in imports_to_files.values():
+        for k, v in i.items():
+            v.sort()
+
+    items = imports_to_files.items()
+    sum1 = {k: {j: len(w) for j, w in v.items()} for k, v in items}
+    sum2 = {k: sum(i for i in v.values()) for k, v in sum1.items()}
+
+    def sort_by_value(d):
+        return dict(sorted(d.items(), key=lambda kv: kv[1], reverse=True))
+
+    sum1 = {k: sort_by_value(v) for k, v in sum1.items()}
+    sum2 = sort_by_value(sum2)
+    sum1 = {k: sum1[k] for k in sum2}
+
+    result = [sum2, sum1, file_to_imports, imports_to_files]
+    print(json.dumps(result, indent=2, sort_keys=False))
 
 
 def one_file(f):
