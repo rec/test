@@ -1,54 +1,39 @@
-import itertools
+from itertools import product
 
 
 def write_file():
-    def var(type: str) -> str:
-        return f"{type[0].lower()}: {type} = {TYPES[type]}"
-
-    def unary(ftype: str, op: str, rtype: str) -> str:
-        ftype, rtype = (i.lower() for i in (ftype, rtype))
-        if len(op) == 1:
-            return f"accept_{ftype}({op}{rtype[0]})"
-        else:
-            return f"accept_{ftype}({op}({rtype[0]}))"
-
-    def binary(ftype: str, ltype: str, op: str, rtype: str) -> str:
-        ft, lt, rt = (i.lower() for i in (ftype, ltype, rtype))
-        return f"accept_{ft}({lt[0]} {op} {rt[0]})"
-
-    for i in (imports, *(_accept(t) for t in TYPES)):
-        print(i)
-        print()
+    print(IMPORTS)
+    print()
+    print()
 
     for t in TYPES:
-        print(var(t))
+        print(f"def accept_{t.lower()}(x: {t}) -> None:\n    pass\n")
 
-    print("\n# Test unary ops")
-    for ftype in TYPES:
+    for t in TYPES:
+        print(f"{t[0].lower()}: {t} = {TYPES[t]}")
+
+    types = [t.lower() for t in TYPES]
+
+    print("\n#\n# Test unary ops\n#")
+    for ftype in types:
         print(f"\n# {ftype=}")
-        for rtype in TYPES:
-            print()
+        for rtype in types:
             print(f"\n# {rtype=}")
-            for op in UNARY.values():
-                print(unary(ftype, op, rtype))
+            for op in UNARY:
+                if len(op) == 1:
+                    print(f"accept_{ftype}({op}{rtype[0]})")
+                else:
+                    print(f"accept_{ftype}({op}({rtype[0]}))")
 
-    print("\n# Test binary ops")
-
-    for ftype in TYPES:
+    print("\n#\n# Test binary ops\n#")
+    for ftype in types:
         print(f"\n# {ftype=}")
-        for ltype in TYPES:
+        for ltype in types:
             print(f"\n# {ltype=}")
-            for rtype in TYPES:
+            for rtype in types:
                 print(f"\n# {rtype=}")
-                for op in BINARY.values():
-                    print(_binary(ftype, ltype, op, rtype))
-
-
-def _accept(type: str) -> str:
-    return f"""
-def accept_{type}(x: {type}) -> Nonw:
-    pass
-"""
+                for op in BINARY_OPS:
+                    print(f"accept_{ftype}({ltype[0]} {op} {rtype[0]})")
 
 
 LOGICAL = {
@@ -58,7 +43,8 @@ LOGICAL = {
     "gt": ">",
     "le": "<=",
     "ge": ">=",
-}
+}.values()
+
 UNARY = {
     "pos": "+",
     "neg": "-",
@@ -68,7 +54,8 @@ UNARY = {
     "floor": "math.floor",
     "ceil": "math.ceil",
     "trunc": "math.trunc",
-}
+}.values()
+
 BINARY = {
     "add": "+",
     "sub": "-",
@@ -83,10 +70,9 @@ BINARY = {
     "and": "&",
     "or": "|",
     "xor": "^",
-}
+}.values()
 
-OPS = *LOGICAL.values(), *BINARY.values(), *(f"{op}=" for op in BINARY.values())
-
+BINARY_OPS = *LOGICAL, *BINARY, *(f"{op}=" for op in BINARY)
 
 
 TYPES = {
@@ -97,7 +83,7 @@ TYPES = {
     'str': "'xyzzy'",
 }
 
-IMPORTS = """\
+IMPORTS = """
 import math
 
 import torch
