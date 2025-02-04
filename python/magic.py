@@ -2,14 +2,46 @@ import itertools
 
 
 def write_file():
-    _paragraph(imports, *(_accept(t) for t in TYPES))
+    def var(type: str) -> str:
+        return f"{type[0].lower()}: {type} = {TYPES[type]}"
+
+    def unary(ftype: str, op: str, rtype: str) -> str:
+        ftype, rtype = (i.lower() for i in (ftype, rtype))
+        if len(op) == 1:
+            return f"accept_{ftype}({op}{rtype[0]})"
+        else:
+            return f"accept_{ftype}({op}({rtype[0]}))"
+
+    def binary(ftype: str, ltype: str, op: str, rtype: str) -> str:
+        ft, lt, rt = (i.lower() for i in (ftype, ltype, rtype))
+        return f"accept_{ft}({lt[0]} {op} {rt[0]})"
+
+    for i in (imports, *(_accept(t) for t in TYPES)):
+        print(i)
+        print()
+
     for t in TYPES:
-        print(_var(t))
+        print(var(t))
 
+    print("\n# Test unary ops")
+    for ftype in TYPES:
+        print(f"\n# {ftype=}")
+        for rtype in TYPES:
+            print()
+            print(f"\n# {rtype=}")
+            for op in UNARY.values():
+                print(unary(ftype, op, rtype))
 
-def _paragraph(*items) -> None:
-    for i in items:
-        print(i, "", sep="\n")
+    print("\n# Test binary ops")
+
+    for ftype in TYPES:
+        print(f"\n# {ftype=}")
+        for ltype in TYPES:
+            print(f"\n# {ltype=}")
+            for rtype in TYPES:
+                print(f"\n# {rtype=}")
+                for op in BINARY.values():
+                    print(_binary(ftype, ltype, op, rtype))
 
 
 def _accept(type: str) -> str:
@@ -19,16 +51,7 @@ def accept_{type}(x: {type}) -> Nonw:
 """
 
 
-def _var(type: str) -> str:
-    return f"{type[0].lower()}: {type} = {TYPES[type]}"
-
-
-def _call(ftype: str, ltype: str, op: str, rtype: str) -> str:
-    ft, lt, rt = (i.lower() for i in (ftype, ltype, rtype))
-    return f"accept_{ft}({lt[0]} {op} {rt[0]})"
-
-
-logical = {
+LOGICAL = {
     "eq": "==",
     "ne": "!=",
     "lt": "<",
@@ -36,7 +59,7 @@ logical = {
     "le": "<=",
     "ge": ">=",
 }
-unary = {
+UNARY = {
     "pos": "+",
     "neg": "-",
     "abs": "abs",
@@ -46,14 +69,14 @@ unary = {
     "ceil": "math.ceil",
     "trunc": "math.trunc",
 }
-binary = {
+BINARY = {
     "add": "+",
     "sub": "-",
     "mul": "*",
     "floordiv": "//",
     "div": "/",
-    "mod": "mod",
-    "divmod": "divmod",
+    "mod": "%",
+    # "divmod": "divmod",
     "pow": "**",
     "lshift": "<<",
     "rshift": ">>",
@@ -61,6 +84,10 @@ binary = {
     "or": "|",
     "xor": "^",
 }
+
+OPS = *LOGICAL.values(), *BINARY.values(), *(f"{op}=" for op in BINARY.values())
+
+
 
 TYPES = {
     'bool': "True",
@@ -70,7 +97,7 @@ TYPES = {
     'str': "'xyzzy'",
 }
 
-imports = """\
+IMPORTS = """\
 import math
 
 import torch
