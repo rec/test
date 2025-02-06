@@ -1,0 +1,229 @@
+    def __add__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __and__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __cmp__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __div__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __eq__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __floordiv__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __ge__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __get__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __gt__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __iadd__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __iand__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __idiv__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __ifloordiv__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __ilshift__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __imod__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __imul__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __invert__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __ior__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __irshift__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __isub__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __ixor__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __le__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __lshift__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __lt__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+__mod__
+__mul__
+__ne__
+__neg__
+__or__
+__radd__
+__rand__
+__rdiv__
+__rfloordiv__
+__rlshift__
+__rmod__
+__rmul__
+__ror__
+__round__
+__rrshift__
+__rshift__
+__rsub__
+__rxor__
+__xor__
+
+
+
+__add__
+__and__
+__cmp__
+__div__
+__eq__
+__floordiv__
+__ge__
+__get__
+__gt__
+__iadd__
+__iand__
+__idiv__
+__ifloordiv__
+__ilshift__
+__imod__
+__imul__
+__invert__
+__ior__
+__irshift__
+__isub__
+__ixor__
+__le__
+__lshift__
+__lt__
+__mod__
+__mul__
+__ne__
+__neg__
+__or__
+__radd__
+__rand__
+__rdiv__
+__rfloordiv__
+__rlshift__
+__rmod__
+__rmul__
+__ror__
+__round__
+__rrshift__
+__rshift__
+__rsub__
+__rxor__
+__xor__
+
+
+
+__add__
+__and__
+__cmp__
+__div__
+__eq__
+__floordiv__
+__ge__
+__get__
+__gt__
+__iadd__
+__iand__
+__idiv__
+__ifloordiv__
+__ilshift__
+__imod__
+__imul__
+__invert__
+__ior__
+__irshift__
+__isub__
+__ixor__
+__le__
+__lshift__
+__lt__
+__mod__
+__mul__
+__ne__
+__neg__
+__or__
+__radd__
+__rand__
+__rdiv__
+__rfloordiv__
+__rlshift__
+__rmod__
+__rmul__
+__ror__
+__round__
+__rrshift__
+__rshift__
+__rsub__
+__rxor__
+__xor__
+
+
+
+__add__
+__and__
+__cmp__
+__div__
+__eq__
+__floordiv__
+__ge__
+__get__
+__gt__
+__iadd__
+__iand__
+__idiv__
+__ifloordiv__
+__ilshift__
+__imod__
+__imul__
+__invert__
+__ior__
+__irshift__
+__isub__
+__ixor__
+__le__
+__lshift__
+__lt__
+__mod__
+__mul__
+__ne__
+__neg__
+__or__
+__radd__
+__rand__
+__rdiv__
+__rfloordiv__
+__rlshift__
+__rmod__
+__rmul__
+__ror__
+__round__
+__rrshift__
+__rshift__
+__rsub__
+__rxor__
+__xor__
