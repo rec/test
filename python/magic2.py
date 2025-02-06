@@ -10,14 +10,17 @@ def write_file():
     types = [t.lower() for t in TYPES]
     atypes = ['tensor', 'str']
 
+    def assert_type(t: str) -> None:
+        print(f"assert_type({t}, Tensor)")
+
     print("\n#\n# Test unary ops\n#")
     for atype in types:
         print()
         for op in UNARY:
             if len(op) == 1:
-                print(f"accept_{atype}({op}{TENSOR})")
+                assert_type(f"{op}T")
             else:
-                print(f"accept_{atype}({op}({TENSOR}))")
+                assert_type(f"{op}(T)")
 
     print("\n#\n# Test binary ops\n#")
     for type, v in TYPES.items():
@@ -26,12 +29,12 @@ def write_file():
         for atype in types:
             print()
             for op in BINARY_OPS:
-                print(f"accept_{atype}({TENSOR} {op} {v})")
+                assert_type(f"T {op} {v}")
 
             if TENSOR != v and not op.endswith("="):
                 print()
                 for op in BINARY_OPS:
-                    print(f"accept_{atype}({v} {op} {TENSOR})")
+                    assert_type(f"{v} {op} T")
 
 
 LOGICAL = {
@@ -85,6 +88,7 @@ HEADER = """\
 import math
 
 from torch import randn, Tensor
+from typing_extensions import assert_type
 
 
 T = randn(3)
