@@ -12,7 +12,9 @@ def all_python_files(path: str, python_root=None):
 
     ignores = {str(p): count for p in paths if (count := count_file(p))}
     ignores = dict(sorted(ignores.items(), key=lambda x: x[1], reverse=True))
+    print(sum(ignores.values()), "ignores")
     print(json.dumps(ignores, indent=2))
+
 
 
 def count_file(p: Path) -> int:
