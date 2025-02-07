@@ -5,22 +5,28 @@ class Binary:
     def __and__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
+    def __ceil__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
     def __cmp__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
     def __div__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
+    def __divmod__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
     def __eq__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __floor__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
     def __floordiv__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
     def __ge__(self, other: int) -> "Binary":  # type: ignore[override]
-        return self
-
-    def __get__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
     def __gt__(self, other: int) -> "Binary":  # type: ignore[override]
@@ -33,6 +39,9 @@ class Binary:
         return self
 
     def __idiv__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __idivmod__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
     def __ifloordiv__(self, other: int) -> "Binary":  # type: ignore[override]
@@ -53,10 +62,16 @@ class Binary:
     def __ior__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
+    def __ipow__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
     def __irshift__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
     def __isub__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __itruediv__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
     def __ixor__(self, other: int) -> "Binary":  # type: ignore[override]
@@ -80,10 +95,10 @@ class Binary:
     def __ne__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
-    def __neg__(self, other: int) -> "Binary":  # type: ignore[override]
+    def __or__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
-    def __or__(self, other: int) -> "Binary":  # type: ignore[override]
+    def __pow__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
     def __radd__(self, other: int) -> "Binary":  # type: ignore[override]
@@ -93,6 +108,9 @@ class Binary:
         return self
 
     def __rdiv__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __rdivmod__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
     def __rfloordiv__(self, other: int) -> "Binary":  # type: ignore[override]
@@ -113,6 +131,9 @@ class Binary:
     def __round__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
+    def __rpow__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
     def __rrshift__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
@@ -122,146 +143,58 @@ class Binary:
     def __rsub__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
+    def __rtruediv__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
     def __rxor__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __sub__(self, other: int) -> "Binary":  # type: ignore[override]
+        return self
+
+    def __truediv__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
     def __xor__(self, other: int) -> "Binary":  # type: ignore[override]
         return self
 
 
+from typing_extensions import assert_type
 
-__add__
-__and__
-__cmp__
-__div__
-__eq__
-__floordiv__
-__ge__
-__get__
-__gt__
-__iadd__
-__iand__
-__idiv__
-__ifloordiv__
-__ilshift__
-__imod__
-__imul__
-__invert__
-__ior__
-__irshift__
-__isub__
-__ixor__
-__le__
-__lshift__
-__lt__
-__mod__
-__mul__
-__ne__
-__neg__
-__or__
-__radd__
-__rand__
-__rdiv__
-__rfloordiv__
-__rlshift__
-__rmod__
-__rmul__
-__ror__
-__round__
-__rrshift__
-__rshift__
-__rsub__
-__rxor__
-__xor__
+assert_type(Binary() + 5, Binary)
+assert_type(Binary() & 5, Binary)
+assert_type(Binary() / 5, Binary)
+assert_type(Binary() == 5, Binary)
+assert_type(Binary() // 5, Binary)
+assert_type(Binary() >= 5, Binary)
+assert_type(Binary() > 5, Binary)
+assert_type(Binary() <= 5, Binary)
+assert_type(Binary() << 5, Binary)
+assert_type(Binary() < 5, Binary)
+assert_type(Binary() % 5, Binary)
+assert_type(Binary() * 5, Binary)
+assert_type(Binary() != 5, Binary)
+assert_type(Binary() | 5, Binary)
+assert_type(Binary()**5, Binary)
+assert_type(Binary() >> 5, Binary)
+assert_type(Binary() - 5, Binary)
+assert_type(Binary() ^ 5, Binary)
 
-
-
-__add__
-__and__
-__cmp__
-__div__
-__eq__
-__floordiv__
-__ge__
-__get__
-__gt__
-__iadd__
-__iand__
-__idiv__
-__ifloordiv__
-__ilshift__
-__imod__
-__imul__
-__invert__
-__ior__
-__irshift__
-__isub__
-__ixor__
-__le__
-__lshift__
-__lt__
-__mod__
-__mul__
-__ne__
-__neg__
-__or__
-__radd__
-__rand__
-__rdiv__
-__rfloordiv__
-__rlshift__
-__rmod__
-__rmul__
-__ror__
-__round__
-__rrshift__
-__rshift__
-__rsub__
-__rxor__
-__xor__
-
-
-
-__add__
-__and__
-__cmp__
-__div__
-__eq__
-__floordiv__
-__ge__
-__get__
-__gt__
-__iadd__
-__iand__
-__idiv__
-__ifloordiv__
-__ilshift__
-__imod__
-__imul__
-__invert__
-__ior__
-__irshift__
-__isub__
-__ixor__
-__le__
-__lshift__
-__lt__
-__mod__
-__mul__
-__ne__
-__neg__
-__or__
-__radd__
-__rand__
-__rdiv__
-__rfloordiv__
-__rlshift__
-__rmod__
-__rmul__
-__ror__
-__round__
-__rrshift__
-__rshift__
-__rsub__
-__rxor__
-__xor__
+assert_type(5 + Binary(), Binary)
+assert_type(5 & Binary(), Binary)
+assert_type(5 / Binary(), Binary)
+assert_type(5 == Binary(), bool)
+assert_type(5 // Binary(), Binary)
+assert_type(5 >= Binary(), Binary)
+assert_type(5 > Binary(), Binary)
+assert_type(5 <= Binary(), Binary)
+assert_type(5 << Binary(), Binary)
+assert_type(5 < Binary(), Binary)
+assert_type(5 % Binary(), Binary)
+assert_type(5 * Binary(), Binary)
+assert_type(5 != Binary(), bool)
+assert_type(5 | Binary(), Binary)
+assert_type(5**Binary(), Binary)
+assert_type(5 >> Binary(), Binary)
+assert_type(5 - Binary(), Binary)
+assert_type(5 ^ Binary(), Binary)
