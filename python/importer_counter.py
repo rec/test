@@ -81,8 +81,6 @@ def all_python_files(path: str, prefix="", python_root=None):
     sum2 = sort_by_value(sum2)
     sum1 = {k: sum1[k] for k in sum2}
 
-    result = [sum2, sum1, imports]
-
     def is_big(x):
         try:
             return len(x) >= FILTER_BELOW
@@ -109,6 +107,7 @@ def all_python_files(path: str, prefix="", python_root=None):
     imports = {k: imports[k] for k in sum2}
     imports = {k: only_bigd(v) for k, v in imports.items()}
 
+    result = [sum2, sum1, imports]
     for r in result:
         print(json.dumps(r, indent=2, sort_keys=False))
 
