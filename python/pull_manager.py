@@ -42,8 +42,12 @@ def parse(argv):
     parsers = Namespace(**{k: add_parser(k, help=v) for k, v in _COMMANDS.items()})
 
     help = "An optional commit, PR index, pull request, or search (start with :/)"
-    parsers.url.add_argument("commit", default=None, help=help)
-    parsers.ref.add_argument("commit", default=None, help=help)
+    if False:
+        parsers.list.add_argument("commit", default=None, help=help)
+        parsers.ref.add_argument("commit", default=None, help=help)
+        parsers.url.add_argument("commit", default=None, help=help)
+    else:
+        parser.add_argument("commit", default=None, help=help)
 
     help = "The github user name"
     parser.add_argument("--user", "-u", default=None, help=help)
@@ -88,16 +92,26 @@ class PullManager:
         else:
             sys.exit(f"Unimplemented command '{self.args.command}'")
 
+    def _open_pulls(self, user: str):
+        commit = self.args.commit
+        for ghstack_index in self.all_users[user]:
+            try:
+                pull, lines, _ref = self._pull_lines_ref(ghstack_index, user=user)
+            except Exception as e:
+                if not e.args[0].startswith("Cannot find a pull request"):
+                    print("ERROR:", e, user, ghstack_index, file=sys.stderr)
+                continue
+            if (not commit or any(commit in i for i in lines)) and _is_pull_open(pull):
+                yield pull, lines
+
     def cmd_list(self):
-        for user, indices in self.users.items():
-            for ghstack_index in indices:
-                try:
-                    pull, lines, ref = self._pull_lines_ref(ghstack_index, user=user)
-                    if _is_pull_open(pull):
-                        print(f"{user}: #{pull}: {lines[0]}")
-                except Exception as e:
-                    if not e.args[0].startswith("Cannot find a pull request"):
-                        print("ERROR:", e, user, ghstack_index)
+        if self.args.all:
+            for user in self.users:
+                for pull, lines in self._open_pulls(user):
+                    print(f"{user}: #{pull}: {lines[0]}")
+        else:
+            for pull, lines in self._open_pulls(self.user):
+                print(f"#{pull}: {lines[0]}")
 
     def cmd_ref(self):
         print(self._pull_ref().ref)
@@ -247,8 +261,7 @@ COMMAND = f"curl {HEADERS} {AUTH} {URL}"
 
 @cache
 def _is_pull_open(pull: str) -> bool:
-    (r := _run_json(f"{COMMAND}/{pull}"))
-    return r["state"] == "open"
+    return _run_json(f"{COMMAND}/{pull}")["state"] == "open"
 
 
 if __name__ == '__main__':
