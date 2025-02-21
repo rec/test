@@ -42,12 +42,7 @@ def parse(argv):
     parsers = Namespace(**{k: add_parser(k, help=v) for k, v in _COMMANDS.items()})
 
     help = "An optional commit, PR index, pull request, or search (start with :/)"
-    if False:
-        parsers.list.add_argument("commit", default=None, help=help)
-        parsers.ref.add_argument("commit", default=None, help=help)
-        parsers.url.add_argument("commit", default=None, help=help)
-    else:
-        parser.add_argument("commit", default=None, help=help)
+    parser.add_argument("commit", nargs="?", default=None, help=help)
 
     help = "The github user name"
     parser.add_argument("--user", "-u", default=None, help=help)
@@ -66,6 +61,7 @@ class PullRef:
     ref: Optional[str] = None
 
     def __init__(self, commit: str):
+        commit = commit or "HEAD"
         if commit.isnumeric():
             if int(commit) >= 1_000_000:
                 self.ref = commit
@@ -106,7 +102,7 @@ class PullManager:
 
     def cmd_list(self):
         if self.args.all:
-            for user in self.users:
+            for user in self.all_users:
                 for pull, lines in self._open_pulls(user):
                     print(f"{user}: #{pull}: {lines[0]}")
         else:
@@ -114,10 +110,10 @@ class PullManager:
                 print(f"#{pull}: {lines[0]}")
 
     def cmd_ref(self):
-        print(self._pull_ref().ref)
+        print(self._pull_ref.pull)
 
     def cmd_url(self):
-        print(f"{_PULL_PREFIX}{self._pull_ref().pull}")
+        print(f"{_PULL_PREFIX}{self._pull_ref.pull}")
 
     @cached_property
     def args(self):
@@ -212,8 +208,11 @@ def _ref_to_pull(ref: str) -> tuple[str, list[str]]:
         pass
 
     lines = [line]
-    while "ghstack-source-id:" not in (line := next(it)):
-        lines.append(line)
+    try:
+        while "ghstack-source-id:" not in (line := next(it)):
+            lines.append(line)
+    except StopIteration:
+        raise ValueError(f"{ref=} is not a ghstack commit") from None
 
     lines = [s for i in lines if (s := i[4:])]
 
