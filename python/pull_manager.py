@@ -1,3 +1,4 @@
+import dataclasses as dc
 import argparse
 import itertools
 from argparse import Namespace
@@ -17,65 +18,45 @@ _COMMANDS = {
 }
 TOKEN_NAME = "GIT_TOKEN" # "PULL_MANAGER_GIT_TOKEN"
 GIT_TOKEN = os.environ.get(TOKEN_NAME)
+_PULL_PREFIX = "https://github.com/pytorch/pytorch/pull/"
 
 
-class ArgumentParser(argparse.ArgumentParser):
-    """
-    Adds better help formatting to argparse.ArgumentParser
-    """
-    _epilog: str = ""
+@dc.dataclass
+class PullRequest:
+    number: int
+    ghstack_ref: int
+    subject: str
 
-    def exit(self, status: int = 0, message: Optional[str] = None):
-        """
-        Overriding this method is a workaround for argparse throwing away all
-        line breaks when printing the `epilog` section of the help message.
-        """
-        argv = sys.argv[1:]
-        if self._epilog and not status and "-h" in argv or "--help" in argv:
-            print(self._epilog)
-        super().exit(status, message)
+    @cached_property
+    def _github_info(self) -> dict[str, Any]:
+        return _run_json(f"{_curl_command()}/{self.number}")
 
+    @cached_property
+    def is_open(self) -> bool:
+        return self._github_info["state"] == "open"
 
-def parse(argv):
-    parser = ArgumentParser()
-    add_parser = parser.add_subparsers(help="Commands:", dest="command").add_parser
-    parsers = Namespace(**{k: add_parser(k, help=v) for k, v in _COMMANDS.items()})
+    def asdict(self) -> dict:
+        d = dc.asdict(self)
+        if (is_open := self.__dict__.get("is_open")) is not None:
+            d["is_open"] = is_open
+        return d
 
-    help = "An optional commit, PR index, pull request, or search (start with :/)"
-    parser.add_argument("commit", nargs="?", default=None, help=help)
+    @cached_property
+    def url(self) -> str:
+        return f"{_PULL_PREFIX}{self.number}"
 
-    help = "The github user name"
-    parser.add_argument("--user", "-u", default=None, help=help)
-
-    help = "List all users"
-    parsers.list.add_argument("--all", "-a", action="store_true")
-
-    help = "Do a git fetch before anything else"
-    parser.add_argument("--fetch", "-f", action="store_true")
-
-    return parser.parse_args()
-
-
-class PullRef:
-    pull: Optional[str] = None
-    ref: Optional[str] = None
-
-    def __init__(self, commit: str):
-        commit = commit or "HEAD"
-        if commit.isnumeric():
-            if int(commit) >= 1_000_000:
-                self.ref = commit
-            else:
-                self.pull = commit
-        elif pull := commit.partition("#")[2] or commit.partition(_PULL_PREFIX)[2]:
-            self.pull = pull
-        else:
-            try:
-                int(commit, 16)
-            except ValueError:
-                self.ref = commit
-            else:
-                self.pull = commit
+    @classmethod
+    def fromdict(
+        cls,
+        number: int,
+        ghstack_ref: int,
+        subject: list,
+        is_open: Optional[bool] = None
+    ):
+        pr = cls(number, ghstack_ref, subject)
+        if is_open is not None:
+            pr.__dict__["is_open"] = is_open
+        return pr
 
 
 class PullManager:
@@ -164,7 +145,7 @@ class PullManager:
         return self.all_users[self.user]
 
     @cached_property
-    def _pull_ref(self) -> PullRef:
+    def _pull_ref(self) -> "PullRef":
         pr = PullRef(self.args.commit)
         if not pr.pull:
             pr.pull = _ref_to_pull(pr.ref)[0]
@@ -196,7 +177,27 @@ class PullManager:
         return f"upstream/gh/{user or self.user}/{ghstack_index}/orig"
 
 
-_PULL_PREFIX = "https://github.com/pytorch/pytorch/pull/"
+
+class PullRef:
+    pull: Optional[str] = None
+    ref: Optional[str] = None
+
+    def __init__(self, commit: str):
+        commit = commit or "HEAD"
+        if commit.isnumeric():
+            if int(commit) >= 1_000_000:
+                self.ref = commit
+            else:
+                self.pull = commit
+        elif pull := commit.partition("#")[2] or commit.partition(_PULL_PREFIX)[2]:
+            self.pull = pull
+        else:
+            try:
+                int(commit, 16)
+            except ValueError:
+                self.ref = commit
+            else:
+                self.pull = commit
 
 
 @cache
@@ -241,26 +242,66 @@ def _run_json(cmd: str):
     return json.loads(_run_raw(cmd))
 
 
-HEADERS = (
-    '-H "Accept: application/vnd.github+json" '
-    '-H "X-GitHub-Api-Version: 2022-11-28"'
-)
-URL = "https://api.github.com/repos/pytorch/pytorch/pulls"
-if GIT_TOKEN:
-    AUTH = f'-H "Authorization: Bearer {GIT_TOKEN}" '
-else:
-    AUTH = ''
-    print(
-        f'WARNING: environment variable {TOKEN_NAME} '
-        'is not set: github will rate-limit you faster',
-        file=sys.stderr
+@cache
+def _curl_command():
+    headers = (
+        '-H "Accept: application/vnd.github+json" '
+        '-H "X-GitHub-Api-Version: 2022-11-28"'
     )
-COMMAND = f"curl {HEADERS} {AUTH} {URL}"
+    url = "https://api.github.com/repos/pytorch/pytorch/pulls"
+    if GIT_TOKEN:
+        auth = f'-H "Authorization: Bearer {GIT_TOKEN}" '
+    else:
+        auth = ''
+        print(
+            f'WARNING: environment variable {TOKEN_NAME} '
+            'is not set: github will rate-limit you sooner',
+            file=sys.stderr
+        )
+    return f"curl {headers} {auth} {url}"
 
 
 @cache
 def _is_pull_open(pull: str) -> bool:
-    return _run_json(f"{COMMAND}/{pull}")["state"] == "open"
+    return _run_json(f"{_curl_command()}/{pull}")["state"] == "open"
+
+
+class ArgumentParser(argparse.ArgumentParser):
+    """
+    Adds better help formatting to argparse.ArgumentParser
+    """
+    _epilog: str = ""
+
+    def exit(self, status: int = 0, message: Optional[str] = None):
+        """
+        Overriding this method is a workaround for argparse throwing away all
+        line breaks when printing the `epilog` section of the help message.
+        """
+        argv = sys.argv[1:]
+        if self._epilog and not status and "-h" in argv or "--help" in argv:
+            print(self._epilog)
+        super().exit(status, message)
+
+
+def parse(argv):
+    parser = ArgumentParser()
+    add_parser = parser.add_subparsers(help="Commands:", dest="command").add_parser
+    parsers = Namespace(**{k: add_parser(k, help=v) for k, v in _COMMANDS.items()})
+
+    help = "An optional commit, PR index, pull request, or search"
+    for p in vars(parsers).values():
+        p.add_argument("commit", nargs="?", default=None, help=help)
+
+    help = "The github user name"
+    parser.add_argument("--user", "-u", default=None, help=help)
+
+    help = "List all users"
+    parsers.list.add_argument("--all", "-a", action="store_true")
+
+    help = "Do a git fetch before anything else"
+    parser.add_argument("--fetch", "-f", action="store_true")
+
+    return parser.parse_args()
 
 
 if __name__ == '__main__':
