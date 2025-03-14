@@ -8,202 +8,94 @@ from pathlib import Path
 from typing import Any, Iterator, Optional, Sequence, Union
 import json
 import os
-import subprocess
+from subprocess import run, CalledProcessError
 import sys
 
 _COMMANDS = {
+    "hud": "HUD URL for a pull request",
     "list": "List all pull requests",
     "ref": "Print git ref id of a pull request",
     "url": "Print the URL for a pull request",
 }
-TOKEN_NAME = "GIT_TOKEN" # "PULL_MANAGER_GIT_TOKEN"
-GIT_TOKEN = os.environ.get(TOKEN_NAME)
+TOKEN_NAMES = "PULL_MANAGER_GIT_TOKEN", "GIT_TOKEN"
+GIT_TOKEN = next((token for n in TOKEN_NAMES if (token := os.environ.get(n))), None)
 _PULL_PREFIX = "https://github.com/pytorch/pytorch/pull/"
+_HUD_PREFIX = "https://hud.pytorch.org/pr/"
+
+FIELDS = "is_open", "pull_message", "pull_number", "ref"
+
+
+class PullError(ValueError):
+    pass
 
 
 @dc.dataclass
 class PullRequest:
-    number: int
-    ghstack_ref: int
-    subject: str
+    ref: str
+
+    @classmethod
+    def make(cls, ref: str) -> Optional['PullRequest']:
+        try:
+            return cls(ref.strip())
+        except PullError:
+            return None
 
     @cached_property
-    def _github_info(self) -> dict[str, Any]:
-        return _run_json(f"{_curl_command()}/{self.number}")
+    def user(self) -> str:
+        return self._user_index[0]
+
+    @cached_property
+    def ghstack_index(self) -> int:
+        return self._user_index[1]
+
+    @cached_property
+    def pull_number(self) -> str:
+        return _get_pull_number_and_message(self.ref)[0]
+
+    @cached_property
+    def pull_message(self) -> list[str]:
+        return _get_pull_number_and_message(self.ref)[1]
+
+    @cached_property
+    def subject(self) -> str:
+        return self.pull_message[0]
 
     @cached_property
     def is_open(self) -> bool:
-        return self._github_info["state"] == "open"
-
-    def asdict(self) -> dict:
-        d = dc.asdict(self)
-        if (is_open := self.__dict__.get("is_open")) is not None:
-            d["is_open"] = is_open
-        return d
+        info = _run_json(f"{_curl_command()}/{self.pull_number}")
+        return info["state"] == "open"
 
     @cached_property
     def url(self) -> str:
-        return f"{_PULL_PREFIX}{self.number}"
+        return f"{_PULL_PREFIX}{self.pull_number}"
+
+    @cached_property
+    def hud_url(self) -> str:
+        return f"{_HUD_PREFIX}{self.pull_number}"
+
+    def asdict(self) -> dict[str, Any]:
+        return {f: v for f in FIELDS if (v := self.__dict__.get(f)) is not None}
 
     @classmethod
-    def fromdict(
-        cls,
-        number: int,
-        ghstack_ref: int,
-        subject: list,
-        is_open: Optional[bool] = None
-    ):
-        pr = cls(number, ghstack_ref, subject)
-        if is_open is not None:
-            pr.__dict__["is_open"] = is_open
+    def fromdict(cls, ref: str, **kwargs: Any) -> "PullRequest":
+        pr = cls(ref)
+        pr.__dict__.update(kwargs)
         return pr
 
-
-class PullManager:
-    def __init__(self, argv=None):
-        self.argv = argv
-
-    def __call__(self) -> None:
-        if method := getattr(self, f"cmd_{self.args.command}", None):
-            method()
-        else:
-            sys.exit(f"Unimplemented command '{self.args.command}'")
-
-    def _open_pulls(self, user: str):
-        commit = self.args.commit
-        for ghstack_index in self.all_users[user]:
-            try:
-                pull, lines, _ref = self._pull_lines_ref(ghstack_index, user=user)
-            except Exception as e:
-                if not e.args[0].startswith("Cannot find a pull request"):
-                    print("ERROR:", e, user, ghstack_index, file=sys.stderr)
-                continue
-            if (not commit or any(commit in i for i in lines)) and _is_pull_open(pull):
-                yield pull, lines
-
-    def cmd_list(self):
-        if self.args.all:
-            for user in self.all_users:
-                for pull, lines in self._open_pulls(user):
-                    print(f"{user}: #{pull}: {lines[0]}")
-        else:
-            for pull, lines in self._open_pulls(self.user):
-                print(f"#{pull}: {lines[0]}")
-
-    def cmd_ref(self):
-        print(self._pull_ref.pull)
-
-    def cmd_url(self):
-        print(f"{_PULL_PREFIX}{self._pull_ref.pull}")
-
     @cached_property
-    def args(self):
-        args = parse(self.argv)
-        if args.fetch:
-            _run("git fetch")
-        return args
+    def _user_index(self) -> tuple[str, int]:
+        parts = self.ref.split("/")
+        if len(parts) == 5:
+            remote, gh, user, index, _ = parts
+            if remote == "upstream" and gh == "gh" and index.isnumeric():
+                return user, int(index)
 
-    @cached_property
-    def remotes(self):
-        remotes = {}
-        for s in _run("git remote -v"):
-            remote, url, _ = s.split()
-            user = url.partition(":")[2].partition("/")[0]
-            remotes[remote] = user
-        return remotes
-
-    @cached_property
-    def user(self):
-        if len(self.remotes) != 1:
-            return self.remotes["origin"]
-        for r in self.remotes.values():
-            return r
-
-    @cached_property
-    def all_users(self):
-        all_users = {}
-        for line in _run("git branch -r"):
-            user_gh = line.partition("/gh/")[2]
-            if user_gh:
-                try:
-                    user, ghstack_index, variety = user_gh.split("/")
-                except ValueError:
-                    continue
-                if variety == "orig":
-                    all_users.setdefault(user, []).append(ghstack_index)
-
-        return all_users
-
-    @cached_property
-    def users(self):
-        if getattr(self.args, "all", None):
-            return self.all_users
-        return {self.user: self.pulls}
-
-    @cached_property
-    def pulls(self):
-        return self.all_users[self.user]
-
-    @cached_property
-    def _pull_ref(self) -> "PullRef":
-        pr = PullRef(self.args.commit)
-        if not pr.pull:
-            pr.pull = _ref_to_pull(pr.ref)[0]
-            return pr
-
-        refs = []
-        search = pr.pull.partition(":/")[2]
-        for ghstack_index in self.pulls:
-            pull, lines, ref = self._pull_lines_ref(ghstack_index)
-            if search and any(search in i for i in lines):
-                refs.append(ref)
-            elif not search and pull == pr.pull:
-                refs.append(ref)
-
-        if not refs:
-            raise ValueError(f"Could not find {pr.pull=}")
-        if len(refs) > 1:
-            raise ValueError(f"Ambiguous {pr.pull=}: {refs}")
-
-        pr.ref = refs[0]
-        return pr
-
-    def _pull_lines_ref(self, ghstack_index: str, user: Optional[str] = None) -> tuple[str, list[str], str]:
-        ref = self._pull_request_ref(ghstack_index, user)
-        pull, lines = _ref_to_pull(ref)
-        return pull, lines, ref
-
-    def _pull_request_ref(self, ghstack_index: str, user: Optional[str] = None) -> str:
-        return f"upstream/gh/{user or self.user}/{ghstack_index}/orig"
-
-
-
-class PullRef:
-    pull: Optional[str] = None
-    ref: Optional[str] = None
-
-    def __init__(self, commit: str):
-        commit = commit or "HEAD"
-        if commit.isnumeric():
-            if int(commit) >= 1_000_000:
-                self.ref = commit
-            else:
-                self.pull = commit
-        elif pull := commit.partition("#")[2] or commit.partition(_PULL_PREFIX)[2]:
-            self.pull = pull
-        else:
-            try:
-                int(commit, 16)
-            except ValueError:
-                self.ref = commit
-            else:
-                self.pull = commit
+        raise PullError(f"Do not understand git reference '{self.ref}'")
 
 
 @cache
-def _ref_to_pull(ref: str) -> tuple[str, list[str]]:
-    lns = _run(f"git log --pretty=medium -1 {ref}")
-    it = iter(lns)
+def _get_pull_number_and_message(ref: str) -> tuple[str, list[str]]:
+    it = iter(_run(f"git log --pretty=medium -1 {ref}"))
 
     while not (line := next(it)).startswith(" "):
         pass
@@ -213,26 +105,135 @@ def _ref_to_pull(ref: str) -> tuple[str, list[str]]:
         while "ghstack-source-id:" not in (line := next(it)):
             lines.append(line)
     except StopIteration:
-        raise ValueError(f"{ref=} is not a ghstack commit") from None
+        raise PullError(f"{ref=} is not a ghstack commit") from None
 
     lines = [s for i in lines if (s := i[4:])]
 
     for i in it:
         if (pull := i.partition(_PULL_PREFIX)[2]):
             return pull, lines
-    raise ValueError(f"Cannot find a pull request for {ref=}") from None
+    raise PullError(f"Cannot find a pull request for {ref=}")
+
+
+@dc.dataclass
+class PullRequests:
+    argv: Optional[Sequence[str]] = None
+    path: Path = Path("~/.pull_manager.json").expanduser()
+
+    def load(self) -> None:
+        if self.path.exists() and (pulls := json.loads(self.path.read_text())):
+            self.pulls = {
+                k: [PullRequest.fromdict(**i) for i in v] for k, v in pulls.items()
+            }
+
+    def save(self) -> None:
+        if (pulls := self.__dict__.get("pulls")) is not None:
+            d = {k: [i.asdict() for i in v] for k, v in pulls.items()}
+            self.path.write_text(json.dumps(d, indent=2))
+
+    @cached_property
+    def pulls(self) -> dict[str, list[PullRequest]]:
+        result: dict[str, list[PullRequest]] = {}
+        for branch in _run("git branch -r"):
+            if pr := PullRequest.make(branch):
+                result.setdefault(pr.user, []).append(pr)
+        return result
+
+    def __call__(self) -> None:
+        if not (method := getattr(self, f"cmd_{self.args.command}", None)):
+            sys.exit(f"Unimplemented command '{self.args.command}'")
+
+        if self.args.refresh:
+            _run("git fetch")
+        else:
+            self.load()
+        method()
+        self.save()
+
+    def cmd_list(self):
+        if self.args.all:
+            for user, pulls in self.pulls.items():
+                for p in pulls:
+                    if self.args.match in p.subject:
+                        print(f"{user}: #{p.pull_number}: {p.subject}")
+        else:
+            for p in self.pulls[self.user]:
+                print(f"#{p.pull_number}: {p.subject}")
+
+    def cmd_ref(self):
+        print(self._matching_pull().ref)
+
+    def cmd_url(self):
+        print(self._matching_pull().url)
+
+    def _get_pull(self, pull_number: str) -> PullRequest:
+        user_pulls = self.pulls.values()
+        pulls = (p for pr in user_pulls for p in pr)
+        pull_requests_by_number = {p.pull_number: p for p in pulls}
+        try:
+            return pull_requests_by_number[pull_number]
+        except KeyError:
+            raise ValueError(f"No pull request {self.commit}") from None
+
+    def _matching_pull(self) -> PullRequest:
+        if self.commit.startswith("#"):
+            return self._get_pull(self.commit[1:])
+
+        if self.commit.isnumeric() and len(self.commit) < 7:
+            return self._get_pull(self.commit)
+
+        try:
+            return self._get_pull(_get_pull_number_and_message(self.commit)[0])
+        except CalledProcessError as e:
+            pass
+
+        pulls = [p for p in self.pulls[self.user] if self.commit in p.subject]
+        if len(pulls) == 1:
+            return pulls[0]
+
+        if not pulls:
+            raise ValueError(f"Can't find any matches for {self.commit}")
+
+        mat = ", ".join(p.pull_number for p in pulls)
+        raise ValueError(f"Multiple matches for {self.commit}: {mat}")
+
+    @cached_property
+    def commit(self) -> str:
+        return self.args.commit or 'HEAD'
+
+    @cached_property
+    def args(self):
+        return parse(self.argv)
+        if args.fetch:
+            _run("git fetch") # elsewhere!
+        return args
+
+    @cached_property
+    def remotes(self):
+        remotes = {}
+        for s in _run("git remote -v"):
+            remote, url, _ = s.split()
+            user = url.partition(":")[2].partition("/")[0]
+            remotes[remote] = user
+
+        return remotes
+
+    @cached_property
+    def user(self):
+        if len(self.remotes) != 1:
+            return self.remotes["origin"]
+        for r in self.remotes.values():
+            return r
 
 
 def _run_raw(cmd: str):
     try:
-        return subprocess.run(
-            cmd, capture_output=True, text=True, check=True, shell=True
-        ).stdout
-
-    except subprocess.CalledProcessError as e:
+        return run(cmd, capture_output=True, text=True, check=True, shell=True).stdout
+    except CalledProcessError as e:
         if e.stderr:
             print(f"Error on command `{cmd}`:\n", e.stderr, file=sys.stderr)
         raise
+
 
 def _run(cmd: str):
     return _run_raw(cmd).splitlines()
@@ -243,27 +244,22 @@ def _run_json(cmd: str):
 
 
 @cache
-def _curl_command():
+def _curl_command() -> str:
     headers = (
         '-H "Accept: application/vnd.github+json" '
         '-H "X-GitHub-Api-Version: 2022-11-28"'
     )
     url = "https://api.github.com/repos/pytorch/pytorch/pulls"
     if GIT_TOKEN:
-        auth = f'-H "Authorization: Bearer {GIT_TOKEN}" '
+        auth = f'-H "Authorization: Bearer {GIT_TOKEN}"'
     else:
         auth = ''
         print(
-            f'WARNING: environment variable {TOKEN_NAME} '
-            'is not set: github will rate-limit you sooner',
+            f'WARNING: one of environment variable {TOKEN_NAMES} '
+            'must be not set or github will rate-limit you sooner',
             file=sys.stderr
         )
     return f"curl {headers} {auth} {url}"
-
-
-@cache
-def _is_pull_open(pull: str) -> bool:
-    return _run_json(f"{_curl_command()}/{pull}")["state"] == "open"
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -288,9 +284,12 @@ def parse(argv):
     add_parser = parser.add_subparsers(help="Commands:", dest="command").add_parser
     parsers = Namespace(**{k: add_parser(k, help=v) for k, v in _COMMANDS.items()})
 
+    help = "A term to match in git subjects"
+    parsers.list.add_argument("match", nargs="?", default="", help=help)
+
     help = "An optional commit, PR index, pull request, or search"
-    for p in vars(parsers).values():
-        p.add_argument("commit", nargs="?", default=None, help=help)
+    for p in (parsers.ref, parsers.url, parsers.hud):
+        p.add_argument("commit", nargs="?", default="", help=help)
 
     help = "The github user name"
     parser.add_argument("--user", "-u", default=None, help=help)
@@ -298,14 +297,11 @@ def parse(argv):
     help = "List all users"
     parsers.list.add_argument("--all", "-a", action="store_true")
 
-    help = "Do a git fetch before anything else"
-    parser.add_argument("--fetch", "-f", action="store_true")
+    help = "Refresh everything from github, including git fetch"
+    parser.add_argument("--refresh", "-r", action="store_true")
 
     return parser.parse_args()
 
 
 if __name__ == '__main__':
-    if True:
-        PullManager()()
-    else:
-        print(_run_raw(f"{COMMAND}/146845"))
+    PullRequests()()
