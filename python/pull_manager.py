@@ -4,6 +4,7 @@ import itertools
 from argparse import Namespace
 from enum import Enum
 from functools import cache, cached_property
+from operator import attrgetter
 from pathlib import Path
 from typing import Any, Iterator, Optional, Sequence, Union
 import json
@@ -25,6 +26,17 @@ _HUD_PREFIX = "https://hud.pytorch.org/pr/"
 FIELDS = "is_open", "pull_message", "pull_number", "ref"
 DEBUG = not True
 
+"""
+TODO:
+
+* only load user pulls unless --all is set
+* sort list (default by number, or alphabetic, also reverse)
+* only show open pull requests
+* not load the pull request data for everything by default
+* bring in "errors" from elsewhere
+
+"""
+
 
 class PullError(ValueError):
     pass
@@ -33,17 +45,6 @@ class PullError(ValueError):
 @dc.dataclass
 class PullRequest:
     ref: str
-
-    @classmethod
-    def make(cls, ref: str) -> Optional['PullRequest']:
-        try:
-            pr = cls(ref.strip())
-            pr.user  # Parses the reference
-            pr.pull_number  # Checks the commit message
-            pr.pull_message
-            return pr
-        except PullError:
-            return None
 
     @cached_property
     def user(self) -> str:
@@ -67,8 +68,6 @@ class PullRequest:
 
     @cached_property
     def is_open(self) -> bool:
-        if False:
-            print('XXX is_open')
         info = _run_json(f"{_curl_command()}/{self.pull_number}")
         return info["state"] == "open"
 
@@ -111,10 +110,14 @@ def _get_ghstack_message(ref: str) -> tuple[str, list[str]]:
         if line.startswith('ghstack-source-id:'):
             end = i
         elif (pull := line.partition(_PULL_PREFIX)[2]):
-            if end != -1:
-                return pull.partition(" ")[0], lines[:end]
+            pull = pull.partition(" ")[0]
+            lines = lines[:end]
+            while line and not lines[-1]:
+                lines.pop()
+            return pull, lines
 
-    raise PullError
+    raise PullError("not a ghstack pull request")
+
 
 @dc.dataclass
 class PullRequests:
@@ -136,8 +139,11 @@ class PullRequests:
     def pulls(self) -> dict[str, list[PullRequest]]:
         result: dict[str, list[PullRequest]] = {}
         for branch in _run("git branch -r"):
-            if pr := PullRequest.make(branch):
+            pr = PullRequest(branch.strip())
+            try:
                 result.setdefault(pr.user, []).append(pr)
+            except PullError:
+                pass
         return result
 
     def __call__(self) -> None:
@@ -148,18 +154,38 @@ class PullRequests:
             _run("git fetch")
         else:
             self.load()
-        method()
-        self.save()
+        try:
+            method()
+        except PullError as e:
+            arg = getattr(self.args, "search", None) or self.commit
+            sys.exit(f"ERROR: {arg}: {e.args[0]}")
+        else:
+            self.save()
 
     def cmd_list(self):
+        def clean_and_sort(user: str) -> list[PullRequest]:
+            pulls = []
+            for p in self.pulls[user]:
+                try:
+                    p.pull_number
+                    if self.args.search in p.subject and (self.args.closed or p.is_open):
+                        pulls.append(p)
+                except PullError:
+                    pass
+
+            key = attrgetter("subject" if self.args.sort else "pull_number")
+            return sorted(pulls, key=key, reverse=self.args.reverse)
+
         if self.args.all:
-            for user, pulls in self.pulls.items():
-                for p in pulls:
-                    if self.args.match in p.subject:
-                        print(f"{user}: #{p.pull_number}: {p.subject}")
+            for user in self.pulls.items():
+                for p in clean_and_sort(user):
+                    print(f"{user}: #{p.pull_number}: {p.subject}")
         else:
-            for p in self.pulls[self.user]:
+            for p in clean_and_sort(self.user):
                 print(f"#{p.pull_number}: {p.subject}")
+
+    def cmd_hud(self):
+        print(self._matching_pull().hud)
 
     def cmd_ref(self):
         print(self._matching_pull().ref)
@@ -174,7 +200,7 @@ class PullRequests:
         try:
             return pull_requests_by_number[pull_number]
         except KeyError:
-            raise ValueError(f"No pull request {self.commit}") from None
+            raise PullError(f"no pull request")
 
     def _matching_pull(self) -> PullRequest:
         if self.commit.startswith("#"):
@@ -193,10 +219,10 @@ class PullRequests:
             return pulls[0]
 
         if not pulls:
-            raise PullError(f"Can't find any matches for {self.commit}")
+            raise PullError("Can't find any matches")
 
         mat = ", ".join(p.pull_number for p in pulls)
-        raise PullError(f"Multiple matches for {self.commit}: {mat}")
+        raise PullError(f"Multiple matches '{mat}'")
 
     @cached_property
     def commit(self) -> str:
@@ -285,21 +311,37 @@ def parse(argv):
     add_parser = parser.add_subparsers(help="Commands:", dest="command").add_parser
     parsers = Namespace(**{k: add_parser(k, help=v) for k, v in _COMMANDS.items()})
 
-    help = "A term to match in git subjects"
-    parsers.list.add_argument("match", nargs="?", default="", help=help)
-
-    help = "An optional commit, PR index, pull request, or search"
-    for p in (parsers.ref, parsers.url, parsers.hud):
-        p.add_argument("commit", nargs="?", default="", help=help)
-
-    help = "The github user name"
-    parser.add_argument("--user", "-u", default=None, help=help)
-
+    # Options for all commands
     help = "List all users"
     parsers.list.add_argument("--all", "-a", action="store_true")
 
     help = "Refresh everything from github, including git fetch"
     parser.add_argument("--refresh", "-r", action="store_true")
+
+    help = "The github user name"
+    parser.add_argument("--user", "-u", default=None, help=help)
+
+    # Options just for `list`
+    help = "A term to match in git subjects"
+    parsers.list.add_argument("search", nargs="?", default="", help=help)
+
+    help = "Also show closed pull requests"
+    parsers.list.add_argument("--close", "-c", action="store_true", help=help)
+
+    help = "Reverse old"
+    parsers.list.add_argument("--reverse", "-r", action="store_true", help=help)
+
+    help = "Sort alphabetically"
+    parsers.list.add_argument("--sort", "-s", action="store_true", help=help)
+
+    # Options for `hud`, `ref` and `url`
+    help = "An optional commit, PR index, pull request, or term to search"
+    for p in (parsers.hud, parsers.ref, parsers.url):
+        p.add_argument("commit", nargs="?", default="", help=help)
+
+    help = "Open the URL in the browser"
+    for p in (parsers.hud, parsers.url):
+        p.add_argument("--open", "-o", action="store_true", help=help)
 
     return parser.parse_args()
 
