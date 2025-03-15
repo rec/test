@@ -23,6 +23,7 @@ _PULL_PREFIX = "https://github.com/pytorch/pytorch/pull/"
 _HUD_PREFIX = "https://hud.pytorch.org/pr/"
 
 FIELDS = "is_open", "pull_message", "pull_number", "ref"
+DEBUG = not True
 
 
 class PullError(ValueError):
@@ -36,7 +37,10 @@ class PullRequest:
     @classmethod
     def make(cls, ref: str) -> Optional['PullRequest']:
         try:
-            return cls(ref.strip())
+            pr = cls(ref.strip())
+            pr.user  # Parses the reference
+            pr.pull_number  # Checks the commit message
+            return pr
         except PullError:
             return None
 
@@ -50,11 +54,11 @@ class PullRequest:
 
     @cached_property
     def pull_number(self) -> str:
-        return _get_pull_number_and_message(self.ref)[0]
+        return _get_ghstack_message(self.ref)[0]
 
     @cached_property
     def pull_message(self) -> list[str]:
-        return _get_pull_number_and_message(self.ref)[1]
+        return _get_ghstack_message(self.ref)[1]
 
     @cached_property
     def subject(self) -> str:
@@ -62,6 +66,8 @@ class PullRequest:
 
     @cached_property
     def is_open(self) -> bool:
+        if False:
+            print('XXX is_open')
         info = _run_json(f"{_curl_command()}/{self.pull_number}")
         return info["state"] == "open"
 
@@ -94,25 +100,15 @@ class PullRequest:
 
 
 @cache
-def _get_pull_number_and_message(ref: str) -> tuple[str, list[str]]:
-    it = iter(_run(f"git log --pretty=medium -1 {ref}"))
+def _get_ghstack_message(ref: str) -> tuple[str, list[str]]:
+    lines = _run(f"git log --pretty=medium -1 {ref}")
+    while lines and (lines[0].startswith(" ") or not lines[0].strip()):
+        lines.pop(0)
 
-    while not (line := next(it)).startswith(" "):
-        pass
-
-    lines = [line]
-    try:
-        while "ghstack-source-id:" not in (line := next(it)):
-            lines.append(line)
-    except StopIteration:
-        raise PullError(f"{ref=} is not a ghstack commit") from None
-
-    lines = [s for i in lines if (s := i[4:])]
-
-    for i in it:
+    for i in lines:
         if (pull := i.partition(_PULL_PREFIX)[2]):
-            return pull, lines
-    raise PullError(f"Cannot find a pull request for {ref=}")
+            return pull.partition(" ")[0], lines
+    raise PullError(f"Cannot find a pull request for {ref}")
 
 
 @dc.dataclass
@@ -183,7 +179,7 @@ class PullRequests:
             return self._get_pull(self.commit)
 
         try:
-            return self._get_pull(_get_pull_number_and_message(self.commit)[0])
+            return self._get_pull(_get_ghstack_message(self.commit)[0])
         except CalledProcessError as e:
             pass
 
@@ -192,10 +188,10 @@ class PullRequests:
             return pulls[0]
 
         if not pulls:
-            raise ValueError(f"Can't find any matches for {self.commit}")
+            raise PullError(f"Can't find any matches for {self.commit}")
 
         mat = ", ".join(p.pull_number for p in pulls)
-        raise ValueError(f"Multiple matches for {self.commit}: {mat}")
+        raise PullError(f"Multiple matches for {self.commit}: {mat}")
 
     @cached_property
     def commit(self) -> str:
@@ -304,4 +300,9 @@ def parse(argv):
 
 
 if __name__ == '__main__':
-    PullRequests()()
+    try:
+        PullRequests()()
+    except PullError as e:
+        if DEBUG:
+            raise
+        sys.exit(f'ERROR: {e.args[0]}')
