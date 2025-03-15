@@ -40,6 +40,7 @@ class PullRequest:
             pr = cls(ref.strip())
             pr.user  # Parses the reference
             pr.pull_number  # Checks the commit message
+            pr.pull_message
             return pr
         except PullError:
             return None
@@ -102,14 +103,18 @@ class PullRequest:
 @cache
 def _get_ghstack_message(ref: str) -> tuple[str, list[str]]:
     lines = _run(f"git log --pretty=medium -1 {ref}")
-    while lines and (lines[0].startswith(" ") or not lines[0].strip()):
-        lines.pop(0)
+    lines = [i[4:] for i in lines if i[:4] == "    "]
+    assert lines
 
-    for i in lines:
-        if (pull := i.partition(_PULL_PREFIX)[2]):
-            return pull.partition(" ")[0], lines
-    raise PullError(f"Cannot find a pull request for {ref}")
+    end = -1
+    for i, line in enumerate(lines):
+        if line.startswith('ghstack-source-id:'):
+            end = i
+        elif (pull := line.partition(_PULL_PREFIX)[2]):
+            if end != -1:
+                return pull.partition(" ")[0], lines[:end]
 
+    raise PullError
 
 @dc.dataclass
 class PullRequests:
