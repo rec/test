@@ -21,7 +21,9 @@ _COMMANDS = {
 TOKEN_NAMES = "PULL_MANAGER_GIT_TOKEN", "GIT_TOKEN"
 GIT_TOKEN = next((token for n in TOKEN_NAMES if (token := os.environ.get(n))), None)
 _PULL_PREFIX = "https://github.com/pytorch/pytorch/pull/"
+_GHSTACK_SOURCE = "ghstack-source-id:"
 _HUD_PREFIX = "https://hud.pytorch.org/pr/"
+_PULL_REQUEST_RESOLVED = "Pull Request resolved:"
 
 FIELDS = "is_open", "pull_message", "pull_number", "ref"
 DEBUG = not True
@@ -32,14 +34,13 @@ TODO:
 * Don't save non-trivial data from others
 * bring in "errors" from elsewhere
 * Open URL in browser
+* Missing pull request!!!  # 131354
 
 DONE:
 * Only load user pulls unless --all is set
 * sort list (default by number, or alphabetic, also reverse)
 * only show open pull requests
 * not load the pull request data for everything by default
-
-
 """
 
 
@@ -61,7 +62,9 @@ class PullRequest:
 
     @cached_property
     def pull_number(self) -> str:
-        return _get_ghstack_message(self.ref)[0]
+        n = _get_ghstack_message(self.ref)[0]
+        assert n.isnumeric()
+        return n
 
     @cached_property
     def pull_message(self) -> list[str]:
@@ -73,7 +76,10 @@ class PullRequest:
 
     @cached_property
     def is_open(self) -> bool:
-        info = _run_json(f"{_curl_command()}/{self.pull_number}")
+        url = f"{_curl_command()}/{self.pull_number}"
+        info = _run_json(url)
+        if info.get("status") == "404":
+            raise ValueError(f"{url=}\n{json.dumps(info, indent=2)}")
         return info["state"] == "open"
 
     @cached_property
@@ -112,19 +118,14 @@ def _get_ghstack_message(ref: str) -> tuple[str, list[str]]:
     lines = [i[4:] for i in lines if i[:4] == "    "]
     assert lines
 
-    end = -1
-    for i, line in enumerate(lines):
-        if line.startswith('ghstack-source-id:'):
-            end = i
-        elif (pull := line.partition(_PULL_PREFIX)[2]):
-            pull = pull.partition(" ")[0]
-            lines = lines[:end]
-            while line and not lines[-1]:
-                lines.pop()
-            return pull, lines
+    urls = [u for s in lines if (u := s.partition(_PULL_REQUEST_RESOLVED)[2].strip())]
+    if not urls:
+        raise PullError("not a ghstack pull request")
+    if len(urls) > 1:
+        raise PullError("Malformed ghstack pull requst")
 
-    raise PullError("not a ghstack pull request")
-
+    end = next((i for i, s in enumerate(lines) if s.startswith(_GHSTACK_SOURCE)), -1)
+    return urls[0].partition(_PULL_PREFIX)[2].strip(), lines[:end]
 
 @dc.dataclass
 class PullRequests:
@@ -273,13 +274,7 @@ def _run(cmd: str):
 
 
 def _run_json(cmd: str):
-    s = _run_raw(cmd)
-    print('**** run', cmd)
-    print()
-    print(s)
-    print()
-    print()
-    return json.loads(s)
+    return json.loads(_run_raw(cmd))
 
 
 @cache
