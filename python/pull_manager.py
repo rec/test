@@ -29,11 +29,16 @@ DEBUG = not True
 """
 TODO:
 
-* only load user pulls unless --all is set
+* Don't save non-trivial data from others
+* bring in "errors" from elsewhere
+* Open URL in browser
+
+DONE:
+* Only load user pulls unless --all is set
 * sort list (default by number, or alphabetic, also reverse)
 * only show open pull requests
 * not load the pull request data for everything by default
-* bring in "errors" from elsewhere
+
 
 """
 
@@ -92,7 +97,9 @@ class PullRequest:
     def _user_index(self) -> tuple[str, int]:
         parts = self.ref.split("/")
         if len(parts) == 5:
-            remote, gh, user, index, _ = parts
+            remote, gh, user, index, branch = parts
+            if branch != "orig":
+                raise PullError(f"Waiting for orig branch")
             if remote == "upstream" and gh == "gh" and index.isnumeric():
                 return user, int(index)
 
@@ -141,7 +148,8 @@ class PullRequests:
         for branch in _run("git branch -r"):
             pr = PullRequest(branch.strip())
             try:
-                result.setdefault(pr.user, []).append(pr)
+                if self.args.all or pr.user == self.user:
+                    result.setdefault(pr.user, []).append(pr)
             except PullError:
                 pass
         return result
@@ -150,10 +158,11 @@ class PullRequests:
         if not (method := getattr(self, f"cmd_{self.args.command}", None)):
             sys.exit(f"Unimplemented command '{self.args.command}'")
 
-        if self.args.refresh:
-            _run("git fetch")
+        if self.args.fetch:
+            "FIXME" or _run("git fetch")
         else:
             self.load()
+
         try:
             method()
         except PullError as e:
@@ -231,9 +240,6 @@ class PullRequests:
     @cached_property
     def args(self):
         return parse(self.argv)
-        if args.fetch:
-            _run("git fetch") # elsewhere!
-        return args
 
     @cached_property
     def remotes(self):
@@ -267,7 +273,13 @@ def _run(cmd: str):
 
 
 def _run_json(cmd: str):
-    return json.loads(_run_raw(cmd))
+    s = _run_raw(cmd)
+    print('**** run', cmd)
+    print()
+    print(s)
+    print()
+    print()
+    return json.loads(s)
 
 
 @cache
@@ -316,7 +328,7 @@ def parse(argv):
     parsers.list.add_argument("--all", "-a", action="store_true")
 
     help = "Refresh everything from github, including git fetch"
-    parser.add_argument("--refresh", "-r", action="store_true")
+    parser.add_argument("--fetch", "-f", action="store_true")
 
     help = "The github user name"
     parser.add_argument("--user", "-u", default=None, help=help)
@@ -326,7 +338,7 @@ def parse(argv):
     parsers.list.add_argument("search", nargs="?", default="", help=help)
 
     help = "Also show closed pull requests"
-    parsers.list.add_argument("--close", "-c", action="store_true", help=help)
+    parsers.list.add_argument("--closed", "-c", action="store_true", help=help)
 
     help = "Reverse old"
     parsers.list.add_argument("--reverse", "-r", action="store_true", help=help)
