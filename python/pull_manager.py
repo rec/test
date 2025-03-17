@@ -173,7 +173,7 @@ class PullRequests:
 
     def __call__(self) -> None:
         if self.args.fetch:
-            _run("git fetch")
+            _run("git fetch upstream")
         else:
             self.load()
 
@@ -190,6 +190,9 @@ class PullRequests:
     def _list(self):
         def clean_and_sort(user: str) -> list[PullRequest]:
             pulls = []
+            if user not in self.pulls:
+                print(self.pulls)
+
             for p in self.pulls[user]:
                 try:
                     p.pull_number
