@@ -11,11 +11,13 @@ import json
 import os
 from subprocess import run, CalledProcessError
 import sys
+import webbrowser
 
 _COMMANDS = {
     "hud": "HUD URL for a pull request",
     "list": "List all pull requests",
     "ref": "Print git ref id of a pull request",
+    "ref_url": "Print git ref id URL for a pull request",
     "url": "Print the URL for a pull request",
 }
 TOKEN_NAMES = "PULL_MANAGER_GIT_TOKEN", "GIT_TOKEN"
@@ -24,6 +26,7 @@ _PULL_PREFIX = "https://github.com/pytorch/pytorch/pull/"
 _GHSTACK_SOURCE = "ghstack-source-id:"
 _HUD_PREFIX = "https://hud.pytorch.org/pr/"
 _PULL_REQUEST_RESOLVED = "Pull Request resolved:"
+_REF_PREFIX = "https://github.com/pytorch/pytorch/tree/"
 
 FIELDS = "is_open", "pull_message", "pull_number", "ref"
 DEBUG = not True
@@ -31,12 +34,12 @@ DEBUG = not True
 """
 TODO:
 
-* Don't save non-trivial data from others
 * bring in "errors" from elsewhere
 * Open URL in browser
-* Missing pull request!!!  # 131354
 
 DONE:
+* Missing pull request!!!  # 131354
+* Don't save non-trivial data from others
 * Only load user pulls unless --all is set
 * sort list (default by number, or alphabetic, also reverse)
 * only show open pull requests
@@ -90,6 +93,11 @@ class PullRequest:
     def hud_url(self) -> str:
         return f"{_HUD_PREFIX}{self.pull_number}"
 
+    @cached_property
+    def ref_url(self) -> str:
+        upstream, _, ref = self.ref.partition("/")
+        return f"{_REF_PREFIX}{ref}"
+
     def asdict(self) -> dict[str, Any]:
         return {f: v for f in FIELDS if (v := self.__dict__.get(f)) is not None}
 
@@ -125,7 +133,11 @@ def _get_ghstack_message(ref: str) -> tuple[str, list[str]]:
         raise PullError("Malformed ghstack pull requst")
 
     end = next((i for i, s in enumerate(lines) if s.startswith(_GHSTACK_SOURCE)), -1)
-    return urls[0].partition(_PULL_PREFIX)[2].strip(), lines[:end]
+    lines = lines[:end]
+    while lines and not lines[-1].strip():
+        lines.pop()
+    return urls[0].partition(_PULL_PREFIX)[2].strip()
+
 
 @dc.dataclass
 class PullRequests:
@@ -160,7 +172,7 @@ class PullRequests:
             sys.exit(f"Unimplemented command '{self.args.command}'")
 
         if self.args.fetch:
-            "FIXME" or _run("git fetch")
+            _run("git fetch")
         else:
             self.load()
 
@@ -194,11 +206,14 @@ class PullRequests:
             for p in clean_and_sort(self.user):
                 print(f"#{p.pull_number}: {p.subject}")
 
-    def cmd_hud(self):
-        print(self._matching_pull().hud)
+    def cmd_hud_url(self):
+        print(self._matching_pull().hud_url)
 
     def cmd_ref(self):
         print(self._matching_pull().ref)
+
+    def cmd_ref_url(self):
+        print(self._matching_pull().ref_url)
 
     def cmd_url(self):
         print(self._matching_pull().url)
@@ -318,37 +333,35 @@ def parse(argv):
     add_parser = parser.add_subparsers(help="Commands:", dest="command").add_parser
     parsers = Namespace(**{k: add_parser(k, help=v) for k, v in _COMMANDS.items()})
 
-    # Options for all commands
-    help = "List all users"
-    parsers.list.add_argument("--all", "-a", action="store_true")
+    for name, p in vars(parsers).items():
+        help = "Refresh everything from github, including git fetch"
+        p.add_argument("--fetch", "-f", action="store_true")
 
-    help = "Refresh everything from github, including git fetch"
-    parser.add_argument("--fetch", "-f", action="store_true")
+        help = "The github user name"
+        p.add_argument("--user", "-u", default=None, help=help)
 
-    help = "The github user name"
-    parser.add_argument("--user", "-u", default=None, help=help)
+        if name == "list":
+            help = "A term to match in git subjects"
+            p.add_argument("search", nargs="?", default="", help=help)
 
-    # Options just for `list`
-    help = "A term to match in git subjects"
-    parsers.list.add_argument("search", nargs="?", default="", help=help)
+            help = "List all users"
+            p.add_argument("--all", "-a", action="store_true")
 
-    help = "Also show closed pull requests"
-    parsers.list.add_argument("--closed", "-c", action="store_true", help=help)
+            help = "Also show closed pull requests"
+            p.add_argument("--closed", "-c", action="store_true", help=help)
 
-    help = "Reverse old"
-    parsers.list.add_argument("--reverse", "-r", action="store_true", help=help)
+            help = "Reverse old"
+            p.add_argument("--reverse", "-r", action="store_true", help=help)
 
-    help = "Sort alphabetically"
-    parsers.list.add_argument("--sort", "-s", action="store_true", help=help)
+            help = "Sort alphabetically"
+            p.add_argument("--sort", "-s", action="store_true", help=help)
+        else:
+            help = "An optional commit, PR index, pull request, or term to search"
+            p.add_argument("commit", nargs="?", default="", help=help)
 
-    # Options for `hud`, `ref` and `url`
-    help = "An optional commit, PR index, pull request, or term to search"
-    for p in (parsers.hud, parsers.ref, parsers.url):
-        p.add_argument("commit", nargs="?", default="", help=help)
-
-    help = "Open the URL in the browser"
-    for p in (parsers.hud, parsers.url):
-        p.add_argument("--open", "-o", action="store_true", help=help)
+            if name.endswith("url"):
+                help = "Open the URL in the browser"
+                p.add_argument("--open", "-o", action="store_true", help=help)
 
     return parser.parse_args()
 
