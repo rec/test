@@ -1,0 +1,1281 @@
+/code/pytorch/torch/_inductor/async_compile.py:99:26: Builtin `set` is deprecated
+  195 | 
+  196 | # Used to keep track of all process pools invoked so far.
+  197 | _pool_set: Set[AnyPool] = set()
+      |                            ^^^
+  199 | 
+  200 | 
+/code/pytorch/torch/_inductor/codecache.py:753:41: Builtin `set` is deprecated
+ 1503 |         for k in sorted(fx_kwargs):
+ 1504 |             if k not in self.EXCLUDED_KWARGS:
+ 1505 |                 if type(fx_kwargs[k]) is set:
+      |                                           ^^^
+ 1507 |                     # Special case to handle set params. Python sets can't be
+ 1508 |                     # ordered, so sort the elements and store them in a proxy.
+/code/pytorch/torch/_inductor/codecache.py:1573:28: Builtin `set` is deprecated
+ 3143 |         self.cache_linemap = graph.cache_linemap
+ 3144 |         # TODO - ordered set
+ 3145 |         self.device_types = set(graph.device_types)
+      |                              ^^^
+ 3147 |         self.device_idxs = set(graph.device_idxs)
+ 3148 |         self.mutated_inputs = set(graph.mutated_inputs)
+/code/pytorch/torch/_inductor/codecache.py:1574:27: Builtin `set` is deprecated
+ 3145 |         # TODO - ordered set
+ 3146 |         self.device_types = set(graph.device_types)
+ 3147 |         self.device_idxs = set(graph.device_idxs)
+      |                             ^^^
+ 3149 |         self.mutated_inputs = set(graph.mutated_inputs)
+ 3150 |         self.mutated_input_idxs = set(graph.mutated_input_idxs)
+/code/pytorch/torch/_inductor/codecache.py:1575:30: Builtin `set` is deprecated
+ 3147 |         self.device_types = set(graph.device_types)
+ 3148 |         self.device_idxs = set(graph.device_idxs)
+ 3149 |         self.mutated_inputs = set(graph.mutated_inputs)
+      |                                ^^^
+ 3151 |         self.mutated_input_idxs = set(graph.mutated_input_idxs)
+ 3152 |         self.constants = graph.constants
+/code/pytorch/torch/_inductor/codecache.py:1576:34: Builtin `set` is deprecated
+ 3149 |         self.device_idxs = set(graph.device_idxs)
+ 3150 |         self.mutated_inputs = set(graph.mutated_inputs)
+ 3151 |         self.mutated_input_idxs = set(graph.mutated_input_idxs)
+      |                                    ^^^
+ 3153 |         self.constants = graph.constants
+ 3154 |         self.torchbind_constants = graph.torchbind_constants
+/code/pytorch/torch/_inductor/codecache.py:1729:39: Builtin `set` is deprecated
+ 3455 |             log.debug("aot constant binary command: %s", cmd)
+ 3456 | 
+ 3457 |             if graph.mutated_buffers & set(graph.constants.keys()):
+      |                                         ^^^
+ 3459 |                 # .data section is between .text and .bss. When the size of .data is large,
+ 3460 |                 # during the linking, the relocation of .text against .bss may overflow.
+/code/pytorch/torch/_inductor/codegen/cpp.py:3417:22: Builtin `set` is deprecated
+ 6831 |             rw = dependencies.extract_read_writes(fn, *var_sizes)
+ 6832 |             all_index += [dep.index for dep in itertools.chain(rw.reads, rw.writes)]
+ 6833 |         contig_vars = set()
+      |                        ^^^
+ 6835 |         contig_vars_list = []
+ 6836 |         non_contig_stride_const = set()
+/code/pytorch/torch/_inductor/codegen/cpp.py:3419:34: Builtin `set` is deprecated
+ 6835 |         contig_vars = set()
+ 6836 |         contig_vars_list = []
+ 6837 |         non_contig_stride_const = set()
+      |                                    ^^^
+ 6839 |         non_contig_stride_other = set()
+ 6840 |         for index in all_index:
+/code/pytorch/torch/_inductor/codegen/cpp.py:3420:34: Builtin `set` is deprecated
+ 6837 |         contig_vars_list = []
+ 6838 |         non_contig_stride_const = set()
+ 6839 |         non_contig_stride_other = set()
+      |                                    ^^^
+ 6841 |         for index in all_index:
+ 6842 |             for var in index.free_symbols:
+/code/pytorch/torch/_inductor/codegen/cpp.py:3945:41: Builtin `set` is deprecated
+ 7887 |                         assert len(node.snodes) > 0, node.snodes
+ 7888 |                         var_ranges = None
+ 7889 |                         indexing_exprs = set()
+      |                                           ^^^
+ 7891 |                         for snode in node.snodes:
+ 7892 |                             v, exprs = get_indexing_ranges_exprs(snode)
+/code/pytorch/torch/_inductor/codegen/cpp.py:4030:25: Builtin `set` is deprecated
+ 8057 |         ranges1 = None
+ 8058 |         if isinstance(ref_node, FusedSchedulerNode):
+ 8059 |             ranges_set = set()
+      |                           ^^^
+ 8061 |             for snode in ref_node.snodes:
+ 8062 |                 if isinstance(snode.node, ir.TemplateBuffer):
+/code/pytorch/torch/_inductor/codegen/cpp.py:4311:52: Builtin `set` is deprecated
+ 8619 |                 # where the buffer is with size of last dim and contiguous.
+ 8620 |                 # Only support this typical case at first.
+ 8621 |                 visited_scheduler_nodes: Set[str] = set()
+      |                                                      ^^^
+ 8623 |                 for scheduler_node in node.get_nodes():
+ 8624 |                     # all users inside same OuterLoopFusedSchedulerNode
+/code/pytorch/torch/_inductor/codegen/cpp_gemm_template.py:874:30: Builtin `set` is deprecated
+ 1745 |         epilogue_creators: List[Callable[[ir.Buffer], ir.Pointwise]] = []
+ 1746 |         fake_buffers: List[ir.Buffer] = []
+ 1747 |         Y_aliases: Set[str] = set()
+      |                                ^^^
+ 1749 | 
+ 1750 |         use_local_acc = (
+/code/pytorch/torch/_inductor/codegen/cpp_utils.py:183:53: Builtin `set` is deprecated
+  363 |         self.is_vec = False
+  364 |         self.dtype: Optional[torch.dtype] = None
+  365 |         self.dependent_itervars: Set[sympy.Symbol] = set()
+      |                                                       ^^^
+  367 | 
+  368 |     def __repr__(self) -> str:
+/code/pytorch/torch/_inductor/codegen/cpp_utils.py:911:13: Builtin `set` is deprecated
+ 1819 | 
+ 1820 | def _get_dtype_from_loopbodies(loop_bodies):
+ 1821 |     dtypes = set()
+      |               ^^^
+ 1823 |     for loop_body in loop_bodies:
+ 1824 |         graphs = [loop_body.root_block.graph] + [
+/code/pytorch/torch/_inductor/codegen/cpp_utils.py:940:26: Builtin `set` is deprecated
+ 1877 |         epilogue_writes: OrderedSet[Dep],
+ 1878 |     ) -> Tuple[bool, bool]:
+ 1879 |         num_indexes = len(set(index_of_template_buf_read))
+      |                            ^^^
+ 1881 | 
+ 1882 |         if num_indexes > 1:
+/code/pytorch/torch/_inductor/codegen/cpp_wrapper_cpu.py:49:31: Builtin `set` is deprecated
+   95 |         self.namespace = "at::"
+   96 |         self.none_str = "nullptr" if config.abi_compatible else "at::Tensor()"
+   97 |         self.extern_call_ops = set()
+      |                                 ^^^
+   99 |         self.size = "sizes()"
+  100 |         self.stride = "strides()"
+/code/pytorch/torch/_inductor/codegen/cpp_wrapper_cpu.py:53:33: Builtin `set` is deprecated
+  103 |         self.stride = "strides()"
+  104 |         self.supports_intermediate_hooks = False
+  105 |         self.outputs_need_copy = set()
+      |                                   ^^^
+  107 |         self.kernel_callsite_id = count()
+  108 |         self.var_array_id = (
+/code/pytorch/torch/_inductor/codegen/cpp_wrapper_cpu.py:58:39: Builtin `set` is deprecated
+  113 |             count()
+  114 |         )  # for different types of local array variable declarations
+  115 |         self.declared_var_array_vars = set()
+      |                                         ^^^
+  117 |         self.int_array_id = count()  # for int array local variable declarations
+  118 |         self.declared_int_array_vars = set()
+/code/pytorch/torch/_inductor/codegen/cpp_wrapper_cpu.py:60:39: Builtin `set` is deprecated
+  117 |         self.declared_var_array_vars = set()
+  118 |         self.int_array_id = count()  # for int array local variable declarations
+  119 |         self.declared_int_array_vars = set()
+      |                                         ^^^
+  121 |         self.tmp_tensor_id = count()  # for tmp tensor local variable declarations
+  122 |         self.arg_var_id = count()
+/code/pytorch/torch/_inductor/codegen/cpp_wrapper_cpu.py:63:35: Builtin `set` is deprecated
+  123 |         self.tmp_tensor_id = count()  # for tmp tensor local variable declarations
+  124 |         self.arg_var_id = count()
+  125 |         self.used_cached_devices = set()
+      |                                     ^^^
+  127 |         self.used_cached_dtypes = set()
+  128 |         self.used_cached_layouts = set()
+/code/pytorch/torch/_inductor/codegen/cpp_wrapper_cpu.py:64:34: Builtin `set` is deprecated
+  125 |         self.arg_var_id = count()
+  126 |         self.used_cached_devices = set()
+  127 |         self.used_cached_dtypes = set()
+      |                                    ^^^
+  129 |         self.used_cached_layouts = set()
+  130 |         self.cached_output_id = count()
+/code/pytorch/torch/_inductor/codegen/cpp_wrapper_cpu.py:65:35: Builtin `set` is deprecated
+  127 |         self.used_cached_devices = set()
+  128 |         self.used_cached_dtypes = set()
+  129 |         self.used_cached_layouts = set()
+      |                                     ^^^
+  131 |         self.cached_output_id = count()
+  132 |         self.scalar_to_tensor_id = count()
+/code/pytorch/torch/_inductor/codegen/cpp_wrapper_cpu.py:693:25: Builtin `set` is deprecated
+ 1383 |         )
+ 1384 |         self.prefix.writeline("  public:")
+ 1385 |         declare_kernel = set(self.src_to_kernel.values()) - set(
+      |                           ^^^
+ 1387 |             self.initialized_kernels.keys()
+ 1388 |         )
+/code/pytorch/torch/_inductor/codegen/cpp_wrapper_cpu.py:693:60: Builtin `set` is deprecated
+ 1383 |         )
+ 1384 |         self.prefix.writeline("  public:")
+ 1385 |         declare_kernel = set(self.src_to_kernel.values()) - set(
+      |                                                              ^^^
+ 1387 |             self.initialized_kernels.keys()
+ 1388 |         )
+/code/pytorch/torch/_inductor/codegen/cpp_wrapper_cpu_array_ref.py:52:31: Builtin `set` is deprecated
+  101 |         self.namespace = "at::"
+  102 |         self.none_str = "nullptr" if config.abi_compatible else "at::Tensor()"
+  103 |         self.extern_call_ops = set()
+      |                                 ^^^
+  105 |         self.size = "sizes()"
+  106 |         self.stride = "strides()"
+/code/pytorch/torch/_inductor/codegen/cpp_wrapper_cpu_array_ref.py:56:33: Builtin `set` is deprecated
+  109 |         self.stride = "strides()"
+  110 |         self.supports_intermediate_hooks = False
+  111 |         self.outputs_need_copy = set()
+      |                                   ^^^
+  113 |         self.kernel_callsite_id = count()
+  114 |         self.var_array_id = (
+/code/pytorch/torch/_inductor/codegen/cpp_wrapper_cpu_array_ref.py:61:39: Builtin `set` is deprecated
+  119 |             count()
+  120 |         )  # for different types of local array variable declarations
+  121 |         self.declared_var_array_vars = set()
+      |                                         ^^^
+  123 |         self.int_array_id = count()  # for int array local variable declarations
+  124 |         self.declared_int_array_vars = set()
+/code/pytorch/torch/_inductor/codegen/cpp_wrapper_cpu_array_ref.py:63:39: Builtin `set` is deprecated
+  123 |         self.declared_var_array_vars = set()
+  124 |         self.int_array_id = count()  # for int array local variable declarations
+  125 |         self.declared_int_array_vars = set()
+      |                                         ^^^
+  127 |         self.tmp_tensor_id = count()  # for tmp tensor local variable declarations
+  128 |         self.arg_var_id = count()
+/code/pytorch/torch/_inductor/codegen/cpp_wrapper_cpu_array_ref.py:66:35: Builtin `set` is deprecated
+  129 |         self.tmp_tensor_id = count()  # for tmp tensor local variable declarations
+  130 |         self.arg_var_id = count()
+  131 |         self.used_cached_devices = set()
+      |                                     ^^^
+  133 |         self.used_cached_dtypes = set()
+  134 |         self.used_cached_layouts = set()
+/code/pytorch/torch/_inductor/codegen/cpp_wrapper_cpu_array_ref.py:67:34: Builtin `set` is deprecated
+  131 |         self.arg_var_id = count()
+  132 |         self.used_cached_devices = set()
+  133 |         self.used_cached_dtypes = set()
+      |                                    ^^^
+  135 |         self.used_cached_layouts = set()
+  136 |         self.cached_output_id = count()
+/code/pytorch/torch/_inductor/codegen/cpp_wrapper_cpu_array_ref.py:68:35: Builtin `set` is deprecated
+  133 |         self.used_cached_devices = set()
+  134 |         self.used_cached_dtypes = set()
+  135 |         self.used_cached_layouts = set()
+      |                                     ^^^
+  137 |         self.cached_output_id = count()
+  138 |         self.scalar_to_tensor_id = count()
+/code/pytorch/torch/_inductor/codegen/halide.py:580:15: Builtin `set` is deprecated
+ 1157 | 
+ 1158 |     def update_on_args(self, name, args, kwargs):
+ 1159 |         used = set(self.used_dims or ())
+      |                 ^^^
+ 1161 |         for arg in itertools.chain(args, kwargs.values()):
+ 1162 |             if isinstance(arg, HalideCSEVariable):
+/code/pytorch/torch/_inductor/codegen/halide.py:729:27: Builtin `set` is deprecated
+ 1455 |         size_hint = functools.partial(V.graph.sizevars.size_hint, fallback=inf)  # type: ignore[arg-type]
+ 1456 |         indices = dict.fromkeys(map(super().prepare_indexing, indices))
+ 1457 |         all_used_symbols = set()
+      |                             ^^^
+ 1459 |         sym_to_node = {
+ 1460 |             n.symbol(): n
+/code/pytorch/torch/_inductor/codegen/halide.py:960:23: Builtin `set` is deprecated
+ 1917 |                     assert split_failed[i] is not None
+ 1918 |                     other_vars, other_part = split_failed[i]
+ 1919 |                     if set(other_vars) & set(part_vars):
+      |                         ^^^
+ 1921 |                         part_vars.extend([v for v in other_vars if v not in part_vars])
+ 1922 |                         part += other_part
+/code/pytorch/torch/_inductor/codegen/halide.py:960:41: Builtin `set` is deprecated
+ 1917 |                     assert split_failed[i] is not None
+ 1918 |                     other_vars, other_part = split_failed[i]
+ 1919 |                     if set(other_vars) & set(part_vars):
+      |                                           ^^^
+ 1921 |                         part_vars.extend([v for v in other_vars if v not in part_vars])
+ 1922 |                         part += other_part
+/code/pytorch/torch/_inductor/codegen/halide.py:1066:20: Builtin `set` is deprecated
+ 2129 |     def used_dims_from_index(self, index: sympy.Expr):
+ 2130 |         """Detect which range trees are used to populate HalideCSEVariable.used_dims"""
+ 2131 |         used_dims = set()
+      |                      ^^^
+ 2133 |         for sym in index.free_symbols:
+ 2134 |             assert isinstance(sym, sympy.Symbol)
+/code/pytorch/torch/_inductor/codegen/halide.py:1286:24: Builtin `set` is deprecated
+ 2569 |         assert len(dtypes) == len(values_orig)
+ 2570 |         values: List[HalideCSEVariable] = []
+ 2571 |         all_used_dims = set()
+      |                          ^^^
+ 2573 |         for value in values_orig:
+ 2574 |             assert isinstance(value, HalideCSEVariable) and value.used_dims is not None
+/code/pytorch/torch/_inductor/codegen/halide.py:1289:15: Builtin `set` is deprecated
+ 2575 |         for value in values_orig:
+ 2576 |             assert isinstance(value, HalideCSEVariable) and value.used_dims is not None
+ 2577 |             if set(value.used_dims) & set(self.reduction_renames):
+      |                 ^^^
+ 2579 |                 values.append(value)
+ 2580 |             else:
+/code/pytorch/torch/_inductor/codegen/halide.py:1289:38: Builtin `set` is deprecated
+ 2575 |         for value in values_orig:
+ 2576 |             assert isinstance(value, HalideCSEVariable) and value.used_dims is not None
+ 2577 |             if set(value.used_dims) & set(self.reduction_renames):
+      |                                        ^^^
+ 2579 |                 values.append(value)
+ 2580 |             else:
+/code/pytorch/torch/_inductor/codegen/halide.py:1299:40: Builtin `set` is deprecated
+ 2595 |             all_used_dims.update(value.used_dims)
+ 2596 |         result_var = self.newfunc(self.sort_used_dims(all_used_dims))
+ 2597 |         assert result_var.used_dims and set(result_var.used_dims) & set(
+      |                                          ^^^
+ 2599 |             self.reduction_renames
+ 2600 |         )
+/code/pytorch/torch/_inductor/codegen/halide.py:1299:68: Builtin `set` is deprecated
+ 2595 |             all_used_dims.update(value.used_dims)
+ 2596 |         result_var = self.newfunc(self.sort_used_dims(all_used_dims))
+ 2597 |         assert result_var.used_dims and set(result_var.used_dims) & set(
+      |                                                                      ^^^
+ 2599 |             self.reduction_renames
+ 2600 |         )
+/code/pytorch/torch/_inductor/codegen/memory_planning.py:653:18: Builtin `set` is deprecated
+ 1303 |                     name_to_group[new_name] = name_to_group[old_name]
+ 1304 | 
+ 1305 |         outputs = set(V.graph.get_output_names())
+      |                    ^^^
+ 1307 |         unique_groups = [*{id(g): g for g in name_to_group.values()}.values()]
+ 1308 |         for group in unique_groups:
+/code/pytorch/torch/_inductor/codegen/memory_planning.py:750:15: Builtin `set` is deprecated
+ 1497 |         are created/destroyed.
+ 1498 |         """
+ 1499 |         seen = set()
+      |                 ^^^
+ 1501 |         for line in lines:
+ 1502 |             if isinstance(line, AllocFromPoolLine):
+/code/pytorch/torch/_inductor/codegen/memory_planning.py:760:15: Builtin `set` is deprecated
+ 1517 |                     seen.add(pool)
+ 1518 | 
+ 1519 |         seen = set()
+      |                 ^^^
+ 1521 |         for line in reversed(lines):
+ 1522 |             if isinstance(line, DeallocFromPoolLine):
+/code/pytorch/torch/_inductor/codegen/multi_kernel.py:30:15: Builtin `set` is deprecated
+   57 |     arg_types = max(arg_types_list, key=len)[:] if arg_types_list is not None else None
+   58 |     for args in args_list:
+   59 |         assert set(args).issubset(set(all_args)), f"{args} v.s. {all_args}"
+      |                 ^^^
+   61 | 
+   62 |     return all_args, arg_types
+/code/pytorch/torch/_inductor/codegen/multi_kernel.py:30:34: Builtin `set` is deprecated
+   57 |     arg_types = max(arg_types_list, key=len)[:] if arg_types_list is not None else None
+   58 |     for args in args_list:
+   59 |         assert set(args).issubset(set(all_args)), f"{args} v.s. {all_args}"
+      |                                    ^^^
+   61 | 
+   62 |     return all_args, arg_types
+/code/pytorch/torch/_inductor/codegen/multi_kernel.py:194:15: Builtin `set` is deprecated
+  385 |     def codegen_nan_check(self):
+  386 |         wrapper = V.graph.wrapper_code
+  387 |         seen = set()
+      |                 ^^^
+  389 |         for k in self.kernels:
+  390 |             _, call_args, precompile_args, _ = k.args.python_argdefs()
+/code/pytorch/torch/_inductor/codegen/simd.py:1389:39: Builtin `set` is deprecated
+ 2775 |             # Keep buffers needed by the non-persistent reduction so both
+ 2776 |             # kernels have the same arguments
+ 2777 |             kernel.must_keep_buffers = set(kernel2.must_keep_buffers)
+      |                                         ^^^
+ 2779 | 
+ 2780 |         self.codegen_node_schedule_with_kernel(node_schedule, kernel)
+/code/pytorch/torch/_inductor/codegen/triton.py:2770:30: Builtin `set` is deprecated
+ 5537 | 
+ 5538 |         inductor_meta = {
+ 5539 |             "autotune_hints": set(self.autotune_hints),
+      |                                ^^^
+ 5541 |             "kernel_name": str(Placeholder.DESCRIPTIVE_NAME),
+ 5542 |             "mutated_arg_names": mutated_args,
+/code/pytorch/torch/_inductor/codegen/triton_combo_kernel.py:621:23: Builtin `set` is deprecated
+ 1239 | 
+ 1240 |     def get_mutated_args_sub_kernels(self) -> List[str]:
+ 1241 |         mutated_args = set()
+      |                         ^^^
+ 1243 |         for sub_kernel in self.sub_kernels:
+ 1244 |             for mutation in sub_kernel.mutations:
+/code/pytorch/torch/_inductor/codegen/wrapper.py:216:19: Builtin `set` is deprecated
+  429 |             assert len(grids) > 1
+  430 |             assert len(grids) == len(configs)
+  431 |             seen = set()
+      |                     ^^^
+  433 |             for grid, c in zip(grids, configs):
+  434 |                 guards = [f"meta['{name}'] == {val}" for name, val in c.kwargs.items()]
+/code/pytorch/torch/_inductor/codegen/wrapper.py:466:47: Builtin `set` is deprecated
+  929 |         self.kernel_autotune_calls = IndentedBuffer()
+  930 |         self.subgraph_definitions = IndentedBuffer()
+  931 |         self.kernel_autotune_names: Set[str] = set()
+      |                                                 ^^^
+  933 |         # If the generated source code is exactly the same, reuse the
+  934 |         # pre-existing kernel for it
+/code/pytorch/torch/_inductor/codegen/wrapper.py:470:65: Builtin `set` is deprecated
+  937 |         # pre-existing kernel for it
+  938 |         self.src_to_kernel: Dict[str, str] = {}
+  939 |         self.kernel_numel_expr: Set[Tuple[str, GraphLowering]] = set()
+      |                                                                   ^^^
+  941 |         self.lines: List[Union[MemoryPlanningLine, LineContext]] = []
+  942 |         self.declare = ""
+/code/pytorch/torch/_inductor/codegen/wrapper.py:486:47: Builtin `set` is deprecated
+  969 |         self.expr_printer: Callable[[Any], str] = pexpr
+  970 |         self.user_defined_kernel_cache: Dict[Tuple[Any, ...], Tuple[str, Any]] = {}
+  971 |         self.unbacked_symbol_decls: Set[str] = set()  # str of sympy.Symbol
+      |                                                 ^^^
+  973 |         self.computed_sizes: Set[sympy.Symbol] = set()
+  974 |         self.launcher_fn_name = None
+/code/pytorch/torch/_inductor/codegen/wrapper.py:487:49: Builtin `set` is deprecated
+  971 |         self.user_defined_kernel_cache: Dict[Tuple[Any, ...], Tuple[str, Any]] = {}
+  972 |         self.unbacked_symbol_decls: Set[str] = set()  # str of sympy.Symbol
+  973 |         self.computed_sizes: Set[sympy.Symbol] = set()
+      |                                                   ^^^
+  975 |         self.launcher_fn_name = None
+  976 |         # This function can be overridden to change the launcher name
+/code/pytorch/torch/_inductor/codegen/wrapper.py:508:42: Builtin `set` is deprecated
+ 1013 |                 self.write_constant(name, hashed)
+ 1014 | 
+ 1015 |         self.allocated: Set[BufferName] = set()
+      |                                            ^^^
+ 1017 |         self.freed: Set[BufferName] = set()
+ 1018 | 
+/code/pytorch/torch/_inductor/codegen/wrapper.py:509:38: Builtin `set` is deprecated
+ 1015 | 
+ 1016 |         self.allocated: Set[BufferName] = set()
+ 1017 |         self.freed: Set[BufferName] = set()
+      |                                        ^^^
+ 1019 | 
+ 1020 |         # maps from reusing buffer to reused buffer
+/code/pytorch/torch/_inductor/codegen/wrapper.py:526:36: Builtin `set` is deprecated
+ 1049 |         self.add_import_once = add_import_once
+ 1050 |         self._metas: Dict[str, str] = {}
+ 1051 |         self._meta_vars: Set[str] = set()
+      |                                      ^^^
+ 1053 |         self.multi_kernel_state = MultiKernelState()
+ 1054 |         self.already_codegened_subgraphs: Set[str] = set()
+/code/pytorch/torch/_inductor/codegen/wrapper.py:528:53: Builtin `set` is deprecated
+ 1053 |         self._meta_vars: Set[str] = set()
+ 1054 |         self.multi_kernel_state = MultiKernelState()
+ 1055 |         self.already_codegened_subgraphs: Set[str] = set()
+      |                                                       ^^^
+ 1057 | 
+ 1058 |         # intermediate tensor value printing utility
+/code/pytorch/torch/_inductor/codegen/wrapper.py:1047:40: Builtin `set` is deprecated
+ 2091 | 
+ 2092 |         # Assign all symbolic shapes needed to local variables
+ 2093 |         bound_vars: Set[sympy.Symbol] = set()
+      |                                          ^^^
+ 2095 | 
+ 2096 |         def is_expr(x):
+/code/pytorch/torch/_inductor/comms.py:156:66: Builtin `set` is deprecated
+  309 | 
+  310 |     ready: List[Runnable] = []
+  311 |     buffer_users: Dict[str, Set[BaseSchedulerNode]] = defaultdict(set)
+      |                                                                    ^^^
+  313 |     snode_to_cost = {snode: estimate_op_runtime(snode) for snode in snodes}
+  314 | 
+/code/pytorch/torch/_inductor/comms.py:674:16: Builtin `set` is deprecated
+ 1345 | 
+ 1346 |     new_order: list[BaseSchedulerNode] = []
+ 1347 |     scheduled = set()
+      |                  ^^^
+ 1349 |     ag_exists = False
+ 1350 |     rs_exists = False
+/code/pytorch/torch/_inductor/comms.py:701:34: Builtin `set` is deprecated
+ 1399 |             ag_exists = True
+ 1400 |             ag_snode = snode
+ 1401 |             ag_related_snode_set: set[scheduler.BaseSchedulerNode] = set()
+      |                                    ^^^
+ 1403 | 
+ 1404 |             # Find the "cast + copy_in + getitem + all_gather" code block
+/code/pytorch/torch/_inductor/comms.py:701:69: Builtin `set` is deprecated
+ 1399 |             ag_exists = True
+ 1400 |             ag_snode = snode
+ 1401 |             ag_related_snode_set: set[scheduler.BaseSchedulerNode] = set()
+      |                                                                       ^^^
+ 1403 | 
+ 1404 |             # Find the "cast + copy_in + getitem + all_gather" code block
+/code/pytorch/torch/_inductor/comms.py:772:34: Builtin `set` is deprecated
+ 1541 | 
+ 1542 |             # Find the "reduce_scatter copy-in + reduce_scatter comm + reduce_scatter wait" code block
+ 1543 |             rs_related_snode_set: set[scheduler.BaseSchedulerNode] = set()
+      |                                    ^^^
+ 1545 |             find_recursive_users_of_node(
+ 1546 |                 rs_snode,
+/code/pytorch/torch/_inductor/comms.py:772:69: Builtin `set` is deprecated
+ 1541 | 
+ 1542 |             # Find the "reduce_scatter copy-in + reduce_scatter comm + reduce_scatter wait" code block
+ 1543 |             rs_related_snode_set: set[scheduler.BaseSchedulerNode] = set()
+      |                                                                       ^^^
+ 1545 |             find_recursive_users_of_node(
+ 1546 |                 rs_snode,
+/code/pytorch/torch/_inductor/compile_fx.py:1221:40: Builtin `set` is deprecated
+ 2439 |         params_flat_unwrap = tracing_context.params_flat_unwrap_subclasses
+ 2440 |         max_offset_idx = max(0, len(params_flat_unwrap) - 1)
+ 2441 |         preserved_indices_params_flat = set()
+      |                                          ^^^
+ 2443 |         unwrapped_idxs = tracing_context.params_unwrapped_to_flat_index
+ 2444 |         assert unwrapped_idxs is not None
+/code/pytorch/torch/_inductor/constant_folding.py:129:20: Builtin `set` is deprecated
+  255 |     def node_to_last_non_output_use(self) -> Dict[torch.fx.Node, List[torch.fx.Node]]:
+  256 |         last_non_output_use = collections.defaultdict(list)
+  257 |         seen_uses = set()
+      |                      ^^^
+  259 |         output_node = next(iter(reversed(self.module.graph.nodes)))
+  260 | 
+/code/pytorch/torch/_inductor/cudagraph_trees.py:652:42: Builtin `set` is deprecated
+ 1301 |         # allocated to the general caching allocator pool gets reallocated to a private pool.
+ 1302 | 
+ 1303 |         non_cudagraph_inps_storage_ptrs = set()
+      |                                            ^^^
+ 1305 |         for storage in non_cudagraph_inps_storages:
+ 1306 |             s = storage()
+/code/pytorch/torch/_inductor/cudagraph_trees.py:837:12: Builtin `set` is deprecated
+ 1671 | 
+ 1672 |         self.static_input_idxs: List[int] = list(
+ 1673 |             set(wrapped_function.static_input_idxs) | set(self.cudagraph_managed_idxs)
+      |              ^^^
+ 1675 |         )
+ 1676 | 
+/code/pytorch/torch/_inductor/cudagraph_trees.py:837:54: Builtin `set` is deprecated
+ 1671 | 
+ 1672 |         self.static_input_idxs: List[int] = list(
+ 1673 |             set(wrapped_function.static_input_idxs) | set(self.cudagraph_managed_idxs)
+      |                                                        ^^^
+ 1675 |         )
+ 1676 | 
+/code/pytorch/torch/_inductor/cudagraph_trees.py:1468:33: Builtin `set` is deprecated
+ 2933 |         live_blocks = get_block_addrs(self.cuda_graphs_pool)
+ 2934 | 
+ 2935 |         live_storage_data_ptrs = set()
+      |                                   ^^^
+ 2937 |         live_storage_weak_ptrs = set()
+ 2938 | 
+/code/pytorch/torch/_inductor/cudagraph_trees.py:1469:33: Builtin `set` is deprecated
+ 2935 | 
+ 2936 |         live_storage_data_ptrs = set()
+ 2937 |         live_storage_weak_ptrs = set()
+      |                                   ^^^
+ 2939 | 
+ 2940 |         for depth, outputs_liveness in enumerate(expected_liveness):
+/code/pytorch/torch/_inductor/cudagraph_trees.py:1829:52: Builtin `set` is deprecated
+ 3655 |         self.ids_to_stack_traces: Dict[FunctionID, Optional[StackTraces]] = {}
+ 3656 | 
+ 3657 |         self.warmed_up_functions: Set[FunctionID] = set()
+      |                                                      ^^^
+ 3659 |         # if we fail to increment generation, and are stuck warming up,
+ 3660 |         # only warn on each function once
+/code/pytorch/torch/_inductor/cudagraph_trees.py:1832:49: Builtin `set` is deprecated
+ 3661 |         # if we fail to increment generation, and are stuck warming up,
+ 3662 |         # only warn on each function once
+ 3663 |         self.warned_functions: Set[FunctionID] = set()
+      |                                                   ^^^
+ 3665 |         torch._C._set_cached_tensors_enabled(True)
+ 3666 | 
+/code/pytorch/torch/_inductor/cudagraph_trees.py:1836:48: Builtin `set` is deprecated
+ 3669 | 
+ 3670 |         # warn only once if a function mutates inputs
+ 3671 |         self.warned_mutation: Set[FunctionID] = set()
+      |                                                  ^^^
+ 3673 | 
+ 3674 |         # NB: cuda caching allocator will remember the stream a segment is allocated to
+/code/pytorch/torch/_inductor/cudagraph_trees.py:2406:18: Builtin `set` is deprecated
+ 4809 |                 stor_stack_trace[storage_ref.data_ptr()] = stack_trace
+ 4810 | 
+ 4811 |         deleted = set()
+      |                    ^^^
+ 4813 |         for storage_ref in self.current_node.path_live_weakrefs():
+ 4814 |             _storage_deref = storage_ref()
+/code/pytorch/torch/_inductor/cudagraph_trees.py:2459:19: Builtin `set` is deprecated
+ 4915 | 
+ 4916 |         # NB: deduplicate aliased outputs
+ 4917 |         for ptr in set(ptrs_to_deallocate):
+      |                     ^^^
+ 4919 |             torch._C._cuda_cudaCachingAllocator_raw_delete(ptr)
+ 4920 | 
+/code/pytorch/torch/_inductor/cudagraph_utils.py:208:22: Builtin `set` is deprecated
+  413 |     # doesnt work for non-trees because the warmup run would apply mutation twice
+  414 |     if torch._inductor.config.triton.cudagraph_trees:
+  415 |         unique_idxs = set(static_input_idxs)
+      |                        ^^^
+  417 |         # checking if mutation is only on parameters/static inputs
+  418 |         mutation_indices = [
+/code/pytorch/torch/_inductor/dependencies.py:111:15: Builtin `set` is deprecated
+  219 |         # We don't reorder the loop for these cases for now, but in theory
+  220 |         # we could improve the algorithm to detect the correct loop orders.
+  221 |         if len(set(self_strides)) != len(self_strides) or len(
+      |                 ^^^
+  223 |             set(other_strides)
+  224 |         ) != len(other_strides):
+/code/pytorch/torch/_inductor/dependencies.py:112:12: Builtin `set` is deprecated
+  221 |         # we could improve the algorithm to detect the correct loop orders.
+  222 |         if len(set(self_strides)) != len(self_strides) or len(
+  223 |             set(other_strides)
+      |              ^^^
+  225 |         ) != len(other_strides):
+  226 |             log.debug(
+/code/pytorch/torch/_inductor/dependencies.py:126:11: Builtin `set` is deprecated
+  249 |         # MemoryDep('addmm_6', 393216*d0 + 768*d1 + d2, {d0: 16, d1: 512, d2: 768}, None)
+  250 |         # MemoryDep('addmm_6', 98304*d0 + d1 + 768*d2, {d0: 64, d1: 768, d2: 128}, None)
+  251 |         if set(self_strides) != set(other_strides):
+      |             ^^^
+  253 |             return None
+  254 | 
+/code/pytorch/torch/_inductor/dependencies.py:126:32: Builtin `set` is deprecated
+  249 |         # MemoryDep('addmm_6', 393216*d0 + 768*d1 + d2, {d0: 16, d1: 512, d2: 768}, None)
+  250 |         # MemoryDep('addmm_6', 98304*d0 + d1 + 768*d2, {d0: 64, d1: 768, d2: 128}, None)
+  251 |         if set(self_strides) != set(other_strides):
+      |                                  ^^^
+  253 |             return None
+  254 | 
+/code/pytorch/torch/_inductor/dependencies.py:134:15: Builtin `set` is deprecated
+  265 |             order.append(stride_to_index[s])
+  266 | 
+  267 |         assert set(order) == set(range(0, self.num_vars))
+      |                 ^^^
+  269 |         return order
+  270 | 
+/code/pytorch/torch/_inductor/dependencies.py:134:29: Builtin `set` is deprecated
+  265 |             order.append(stride_to_index[s])
+  266 | 
+  267 |         assert set(order) == set(range(0, self.num_vars))
+      |                               ^^^
+  269 |         return order
+  270 | 
+/code/pytorch/torch/_inductor/dependencies.py:373:50: Builtin `set` is deprecated
+  743 | 
+  744 |     def with_read(self, dep: Union[Dep, Set[Dep]]) -> "ReadWrites":
+  745 |         assert isinstance(dep, (WeakDep, StarDep, set))
+      |                                                    ^^^
+  747 |         if not isinstance(dep, set):
+  748 |             dep = {dep}
+/code/pytorch/torch/_inductor/dependencies.py:374:31: Builtin `set` is deprecated
+  745 |     def with_read(self, dep: Union[Dep, Set[Dep]]) -> "ReadWrites":
+  746 |         assert isinstance(dep, (WeakDep, StarDep, set))
+  747 |         if not isinstance(dep, set):
+      |                                 ^^^
+  749 |             dep = {dep}
+  750 |         return ReadWrites(
+/code/pytorch/torch/_inductor/fx_passes/b2b_gemm.py:614:38: Builtin `set` is deprecated
+ 1225 |         (2) the subgraph node set including src and dst (which only makes sense when the Boolean value is True)
+ 1226 |         """
+ 1227 |         visited: Set[torch.fx.Node] = set()
+      |                                        ^^^
+ 1229 |         input_counter: Dict[torch.fx.Node, int] = {}
+ 1230 | 
+/code/pytorch/torch/_inductor/fx_passes/ddp_fusion.py:129:28: Builtin `set` is deprecated
+  255 | 
+  256 |     # Identify all the outputs of this collective block.
+  257 |     outputs: Set[fx.Node] = set()
+      |                              ^^^
+  259 |     nodes = collections.deque(wait_nodes)
+  260 |     while nodes:
+/code/pytorch/torch/_inductor/fx_passes/ddp_fusion.py:299:16: Builtin `set` is deprecated
+  595 |         comm_node=fused_comm_node,
+  596 |         inputs=[input_node],
+  597 |         outputs=set(wait_nodes),
+      |                  ^^^
+  599 |     )
+  600 | 
+/code/pytorch/torch/_inductor/fx_passes/ddp_fusion.py:377:24: Builtin `set` is deprecated
+  751 | 
+  752 |     last_fused_result = fused_outputs[0]
+  753 |     fused_outputs_set = set(fused_outputs)
+      |                          ^^^
+  755 |     for node in graph.nodes:
+  756 |         if node in fused_outputs_set:
+/code/pytorch/torch/_inductor/fx_passes/ddp_fusion.py:551:36: Builtin `set` is deprecated
+ 1099 | 
+ 1100 |     # Find all the end users.
+ 1101 |     allreduce_users: Set[fx.Node] = set()
+      |                                      ^^^
+ 1103 |     for allreduce in comm_blocks:
+ 1104 |         for output in allreduce.outputs:
+/code/pytorch/torch/_inductor/fx_passes/dedupe_symint_uses.py:65:36: Builtin `set` is deprecated
+  127 | 
+  128 |     sym_dict = _SymHashingDict()
+  129 |     resolvable_from_input_symints = set()
+      |                                      ^^^
+  131 | 
+  132 |     for node in graph.nodes:
+/code/pytorch/torch/_inductor/fx_passes/group_batch_fusion.py:1234:38: Builtin `set` is deprecated
+ 2465 |     def find_dependent_nodes(node, interesting_nodes):
+ 2466 |         visited_node_set: Set[torch.fx.Node] = {node}
+ 2467 |         dep_set: Set[torch.fx.Node] = set()
+      |                                        ^^^
+ 2469 | 
+ 2470 |         work = [node]
+/code/pytorch/torch/_inductor/fx_passes/group_batch_fusion.py:1260:42: Builtin `set` is deprecated
+ 2517 |     while node_list:
+ 2518 |         subset: List[torch.fx.Node] = []
+ 2519 |         subset_deps: Set[torch.fx.Node] = set()
+      |                                            ^^^
+ 2521 | 
+ 2522 |         next_round_node_list = _OrderedSet()
+/code/pytorch/torch/_inductor/fx_passes/group_batch_fusion.py:1306:38: Builtin `set` is deprecated
+ 2609 |         return candidate_dict
+ 2610 | 
+ 2611 |     visited_set: Set[torch.fx.Node] = set()
+      |                                        ^^^
+ 2613 | 
+ 2614 |     for next_node in root_node.all_input_nodes:
+/code/pytorch/torch/_inductor/fx_passes/group_batch_fusion.py:1335:36: Builtin `set` is deprecated
+ 2667 | def apply_group_batch_fusion(graph: torch.fx.GraphModule, rule: GroupBatchFusionBase):
+ 2668 |     stable_topological_sort(graph)  # type: ignore[arg-type]
+ 2669 |     fused_set: Set[torch.fx.Node] = set()
+      |                                      ^^^
+ 2671 |     log_to_scuba = False
+ 2672 | 
+/code/pytorch/torch/_inductor/fx_passes/joint_graph.py:348:16: Builtin `set` is deprecated
+  693 |         graph = gm.graph
+  694 | 
+  695 |         zeros = set()
+      |                  ^^^
+  697 |         ones = set()
+  698 | 
+/code/pytorch/torch/_inductor/fx_passes/joint_graph.py:349:15: Builtin `set` is deprecated
+  695 | 
+  696 |         zeros = set()
+  697 |         ones = set()
+      |                 ^^^
+  699 | 
+  700 |         # Got failures in `test_is_set_to_cuda` if we change aliasing on constants,
+/code/pytorch/torch/_inductor/fx_passes/micro_pipeline_tp.py:44:16: Builtin `set` is deprecated
+   85 | 
+   86 | def _find_ancestors(node: torch.fx.Node) -> Set[torch.fx.Node]:
+   87 |     ancestors = set()
+      |                  ^^^
+   89 |     ancestors.add(node)
+   90 |     cur_nodes = [node]
+/code/pytorch/torch/_inductor/fx_passes/micro_pipeline_tp.py:168:23: Builtin `set` is deprecated
+  333 |     # Match in reverse to ensure longer patterns is prioritized
+  334 |     all_gathers = []
+  335 |     visited_ag_nodes = set()
+      |                         ^^^
+  337 |     for node in reversed(graph.nodes):
+  338 |         for target, patterns in res_node_target_to_patterns.items():
+/code/pytorch/torch/_inductor/fx_passes/micro_pipeline_tp.py:475:15: Builtin `set` is deprecated
+  947 |     group_name: str,
+  948 | ) -> torch.fx.Node:
+  949 |     mm_types = set(map(type, matmuls))
+      |                 ^^^
+  951 |     assert len(mm_types) == 1
+  952 |     mm_type = next(iter(mm_types))
+/code/pytorch/torch/_inductor/fx_passes/micro_pipeline_tp.py:559:32: Builtin `set` is deprecated
+ 1115 |     ]
+ 1116 | 
+ 1117 |     if len(matmuls) == 0 or len(set(map(type, matmuls))) != 1:
+      |                                  ^^^
+ 1119 |         return
+ 1120 | 
+/code/pytorch/torch/_inductor/fx_passes/micro_pipeline_tp.py:757:36: Builtin `set` is deprecated
+ 1511 |     Compute the ancestors for all nodes in a graph.
+ 1512 |     """
+ 1513 |     node_to_ancestors = defaultdict(set)
+      |                                      ^^^
+ 1515 |     for node in graph.nodes:
+ 1516 |         node_to_ancestors[node] = set(node.all_input_nodes)
+/code/pytorch/torch/_inductor/fx_passes/micro_pipeline_tp.py:759:34: Builtin `set` is deprecated
+ 1515 |     node_to_ancestors = defaultdict(set)
+ 1516 |     for node in graph.nodes:
+ 1517 |         node_to_ancestors[node] = set(node.all_input_nodes)
+      |                                    ^^^
+ 1519 |         for dep in node.all_input_nodes:
+ 1520 |             node_to_ancestors[node] |= node_to_ancestors[dep]
+/code/pytorch/torch/_inductor/fx_passes/micro_pipeline_tp.py:813:22: Builtin `set` is deprecated
+ 1623 | 
+ 1624 |     collective_to_overlapping_candidates = defaultdict(list)
+ 1625 |     available_nodes = set()
+      |                        ^^^
+ 1627 |     collective_to_overlappable_nodes = _get_collective_to_overlappable_nodes(graph)
+ 1628 |     for collective, overlappable_nodes in collective_to_overlappable_nodes.items():
+/code/pytorch/torch/_inductor/fx_passes/micro_pipeline_tp.py:818:27: Builtin `set` is deprecated
+ 1633 |         candidates = [x for x in overlappable_nodes if _is_compute_intensive(x)]
+ 1634 |         collective_to_overlapping_candidates[collective] = candidates
+ 1635 |         available_nodes |= set(candidates)
+      |                             ^^^
+ 1637 | 
+ 1638 |     unexposed_collectives = []
+/code/pytorch/torch/_inductor/fx_passes/misc_patterns.py:106:37: Builtin `set` is deprecated
+  209 |                 )
+  210 |                 signatures = () if signatures is None else signatures
+  211 |                 replaceable_kwargs = set()
+      |                                       ^^^
+  213 |                 for sig in signatures:
+  214 |                     for param_name in sig.parameters.keys():
+/code/pytorch/torch/_inductor/fx_passes/mkldnn_fusion.py:413:29: Builtin `set` is deprecated
+  823 |             # Check whether _ancestor_node is the ancestor node of _current_node
+  824 |             _node_list = [_current_node]
+  825 |             _visited_nodes = set()
+      |                               ^^^
+  827 |             while len(_node_list) != 0:
+  828 |                 _current_node = _node_list.pop(0)
+/code/pytorch/torch/_inductor/fx_passes/numeric_utils.py:45:11: Builtin `set` is deprecated
+   87 | # transformation to make sure the numerical results are the same.
+   88 | def compare_dict_tensors(dict_base, dict_control, precision):
+   89 |     if len(set(dict_base.keys())) != len(set(dict_control.keys())):
+      |             ^^^
+   91 |         logger.warning("Mismatch keys found before and after pre/post grad fx passes.")
+   92 |         logger.debug("keys before pre/post grad fx passes %s", dict_base.keys())
+/code/pytorch/torch/_inductor/fx_passes/numeric_utils.py:45:41: Builtin `set` is deprecated
+   87 | # transformation to make sure the numerical results are the same.
+   88 | def compare_dict_tensors(dict_base, dict_control, precision):
+   89 |     if len(set(dict_base.keys())) != len(set(dict_control.keys())):
+      |                                           ^^^
+   91 |         logger.warning("Mismatch keys found before and after pre/post grad fx passes.")
+   92 |         logger.debug("keys before pre/post grad fx passes %s", dict_base.keys())
+/code/pytorch/torch/_inductor/fx_passes/post_grad.py:199:17: Builtin `set` is deprecated
+  395 |             node.prepend(other_node)
+  396 | 
+  397 |     seen_nodes = set()
+      |                   ^^^
+  399 | 
+  400 |     # only reorder nodes before the first copy_ in the graph.
+/code/pytorch/torch/_inductor/fx_passes/post_grad.py:568:24: Builtin `set` is deprecated
+ 1133 |     split_sizes = get_arg_value(split_node, 1, "split_sizes")
+ 1134 |     # All parts of split should be included in the cat
+ 1135 |     if get_item_args != set(range(len(split_sizes))):
+      |                          ^^^
+ 1137 |         return False
+ 1138 |     # The order of get_item_args should same with cat_node used.
+/code/pytorch/torch/_inductor/fx_passes/post_grad.py:689:13: Builtin `set` is deprecated
+ 1375 |     Removes both operations that are essentially aten.clone and operations that are essentially aten.alias from the graph.
+ 1376 |     """
+ 1377 |     inputs = set()
+      |               ^^^
+ 1379 |     input_storages = set()
+ 1380 |     output_storages = set()
+/code/pytorch/torch/_inductor/fx_passes/post_grad.py:690:21: Builtin `set` is deprecated
+ 1377 |     """
+ 1378 |     inputs = set()
+ 1379 |     input_storages = set()
+      |                       ^^^
+ 1381 |     output_storages = set()
+ 1382 | 
+/code/pytorch/torch/_inductor/fx_passes/post_grad.py:691:22: Builtin `set` is deprecated
+ 1379 |     inputs = set()
+ 1380 |     input_storages = set()
+ 1381 |     output_storages = set()
+      |                        ^^^
+ 1383 | 
+ 1384 |     for node in graph.find_nodes(op="placeholder"):
+/code/pytorch/torch/_inductor/fx_passes/post_grad.py:1156:25: Builtin `set` is deprecated
+ 2309 | 
+ 2310 |     def __call__(self, graph: fx.Graph) -> None:
+ 2311 |         target_devices = set()
+      |                           ^^^
+ 2313 |         constructors = []
+ 2314 | 
+/code/pytorch/torch/_inductor/fx_passes/post_grad.py:1199:43: Builtin `set` is deprecated
+ 2395 | 
+ 2396 |         # which constructors cannot be moved to gpu
+ 2397 |         cannot_move_to_gpu: Set[fx.Node] = set()
+      |                                             ^^^
+ 2399 | 
+ 2400 |         # For any node in the graph, which constructors does it have a dependency on
+/code/pytorch/torch/_inductor/fx_passes/post_grad.py:1202:76: Builtin `set` is deprecated
+ 2401 | 
+ 2402 |         # For any node in the graph, which constructors does it have a dependency on
+ 2403 |         constructor_dependencies: Dict[fx.Node, Set[fx.Node]] = defaultdict(set)
+      |                                                                              ^^^
+ 2405 | 
+ 2406 |         # if a cpu node has a dependency on two different cpu constructors,
+/code/pytorch/torch/_inductor/fx_passes/post_grad.py:1263:15: Builtin `set` is deprecated
+ 2523 |             all_cannot_move_to_gpu.update(equal_constructor_sets[constructor])
+ 2524 | 
+ 2525 |         return set(constructors) - all_cannot_move_to_gpu
+      |                 ^^^
+ 2527 | 
+ 2528 | 
+/code/pytorch/torch/_inductor/fx_passes/reinplace.py:394:21: Builtin `set` is deprecated
+  785 |     # maps argument to the first copy_ node that mutates it.
+  786 |     copy_nodes = {}
+  787 |     mutated_inputs = set()
+      |                       ^^^
+  789 |     storage_to_nodes = defaultdict(list)
+  790 |     node_order: Dict[Any, int] = {}
+/code/pytorch/torch/_inductor/fx_passes/reinplace.py:547:37: Builtin `set` is deprecated
+ 1091 |     ):
+ 1092 |         tensors_to_clone: List[str] = []
+ 1093 |         storage_of_reinplaced_args = set()
+      |                                       ^^^
+ 1095 | 
+ 1096 |         # Those used to count possibly_missed_reinplacing_opportunities
+/code/pytorch/torch/_inductor/fx_passes/split_cat.py:535:20: Builtin `set` is deprecated
+ 1067 |             return FailedMatch("split not normalized")
+ 1068 |         # check users are all unique getitems
+ 1069 |         seen_idxs = set()
+      |                      ^^^
+ 1071 |         for user in node.users:
+ 1072 |             if not CallFunction(operator.getitem, Arg(), Arg()).match(user):
+/code/pytorch/torch/_inductor/fx_passes/split_cat.py:719:22: Builtin `set` is deprecated
+ 1435 |         user_inputs = get_arg_value(cat_node, 0, "tensors")
+ 1436 |         simplified_user_inputs = []
+ 1437 |         split_users = set(split_node.users.keys())
+      |                        ^^^
+ 1439 |         for user_input in user_inputs:
+ 1440 |             if user_input not in split_users:
+/code/pytorch/torch/_inductor/fx_passes/split_cat.py:735:22: Builtin `set` is deprecated
+ 1467 |         """
+ 1468 |         node_input = []
+ 1469 |         split_users = set(split_node.users.keys())
+      |                        ^^^
+ 1471 |         for node_arg in node.all_input_nodes:
+ 1472 |             if node_arg in split_users:
+/code/pytorch/torch/_inductor/fx_passes/split_cat.py:777:17: Builtin `set` is deprecated
+ 1551 |         user_inputs_list: List[List[Union[torch.fx.Node, _Range]]],
+ 1552 |     ) -> Optional[List[_Range]]:
+ 1553 |         ranges = set()
+      |                   ^^^
+ 1555 |         for user_node, user_inputs in zip(next_users, user_inputs_list):
+ 1556 |             ranges |= {
+/code/pytorch/torch/_inductor/fx_passes/split_cat.py:852:27: Builtin `set` is deprecated
+ 1701 |                     ]
+ 1702 |                     # All sections should be equal
+ 1703 |                     if len(set(subset_split_sections)) != 1:
+      |                             ^^^
+ 1705 |                         return None
+ 1706 | 
+/code/pytorch/torch/_inductor/fx_passes/split_cat.py:1998:12: Builtin `set` is deprecated
+ 3993 | 
+ 3994 | def remove_split_unbind_children(graph: torch.fx.Graph, inputs: List[torch.fx.Node]):
+ 3995 |     nodes = set()
+      |              ^^^
+ 3997 |     for input in inputs:
+ 3998 |         if input.target == operator.getitem:
+/code/pytorch/torch/_inductor/fx_utils.py:76:32: Builtin `set` is deprecated
+  149 | 
+  150 |     def __init__(self, graph: torch.fx.Graph) -> None:
+  151 |         self.processed_hashes = set()
+      |                                  ^^^
+  153 |         self.graph = graph
+  154 | 
+/code/pytorch/torch/_inductor/fx_utils.py:87:20: Builtin `set` is deprecated
+  171 | 
+  172 |     def incremental_update(self):
+  173 |         processed = set()
+      |                      ^^^
+  175 |         existing_storages: DefaultDict[Optional[int], int] = defaultdict(int)
+  176 |         for node in self.graph.nodes:
+/code/pytorch/torch/_inductor/fx_utils.py:151:21: Builtin `set` is deprecated
+  299 |             )
+  300 | 
+  301 |         to_process = set()
+      |                       ^^^
+  303 |         for node in self.graph.nodes:
+  304 |             if (
+/code/pytorch/torch/_inductor/kernel/mm_common.py:73:11: Builtin `set` is deprecated
+  143 |         min_block_size_k,
+  144 |     )
+  145 |     used = set()
+      |             ^^^
+  147 |     for block_m, block_n, block_k, num_stages, num_warps in configs:
+  148 |         # shrink configs for small sizes
+/code/pytorch/torch/_inductor/lowering.py:81:40: Builtin `set` is deprecated
+  159 |     torch._ops.OpOverload, Optional[Callable[..., Any]]
+  160 | ] = {}
+  161 | fallbacks: Set[torch._ops.OpOverload] = set()
+      |                                          ^^^
+  163 | aten = torch.ops.aten
+  164 | tr_c10d = torch.ops.tr_c10d
+/code/pytorch/torch/_inductor/lowering.py:85:52: Builtin `set` is deprecated
+  167 | tr_c10d = torch.ops.tr_c10d
+  168 | prims = torch.ops.prims
+  169 | needs_realized_inputs: Set[torch._ops.OpOverload] = set()
+      |                                                      ^^^
+  171 | foreach_ops: Set[torch._ops.OpOverload] = set()
+  172 | inplace_foreach_ops: Set[torch._ops.OpOverload] = set()
+/code/pytorch/torch/_inductor/lowering.py:86:42: Builtin `set` is deprecated
+  169 | prims = torch.ops.prims
+  170 | needs_realized_inputs: Set[torch._ops.OpOverload] = set()
+  171 | foreach_ops: Set[torch._ops.OpOverload] = set()
+      |                                            ^^^
+  173 | inplace_foreach_ops: Set[torch._ops.OpOverload] = set()
+  174 | inplaceable_foreach_ops: Dict[torch._ops.OpOverload, torch._ops.OpOverload] = {}
+/code/pytorch/torch/_inductor/lowering.py:87:50: Builtin `set` is deprecated
+  171 | needs_realized_inputs: Set[torch._ops.OpOverload] = set()
+  172 | foreach_ops: Set[torch._ops.OpOverload] = set()
+  173 | inplace_foreach_ops: Set[torch._ops.OpOverload] = set()
+      |                                                    ^^^
+  175 | inplaceable_foreach_ops: Dict[torch._ops.OpOverload, torch._ops.OpOverload] = {}
+  176 | quantized_decomposed = torch.ops.quantized_decomposed
+/code/pytorch/torch/_inductor/lowering.py:138:36: Builtin `set` is deprecated
+  273 | 
+  274 | def add_needs_realized_inputs(fn):
+  275 |     if isinstance(fn, (list, tuple, set)):
+      |                                      ^^^
+  277 |         return [add_needs_realized_inputs(x) for x in fn]
+  278 |     needs_realized_inputs.add(fn)
+/code/pytorch/torch/_inductor/lowering.py:894:11: Builtin `set` is deprecated
+ 1785 |     )
+ 1786 |     dim = canonicalize_dims(len(x.get_size()), dim)  # type: ignore[call-overload]
+ 1787 |     dims = set((dim,) if not isinstance(dim, tuple) else dim)
+      |             ^^^
+ 1789 | 
+ 1790 |     new_shape = []
+/code/pytorch/torch/_inductor/lowering.py:5185:15: Builtin `set` is deprecated
+10367 |             axis[i] += len(size) if len(size) else 1
+10368 |         assert 0 <= axis[i] < len(size) or (len(size) == 0 and axis[i] == 0)
+10369 |     assert len(set(axis)) == len(axis), "reduction axis not unique"
+      |                 ^^^
+10371 |     return axis
+10372 | 
+/code/pytorch/torch/_inductor/lowering.py:5193:11: Builtin `set` is deprecated
+10383 |         x = to_dtype(x, dtype)
+10384 |     size = x.get_size()
+10385 |     axis = set(_validate_reduction_axis(x, axis))
+      |             ^^^
+10387 | 
+10388 |     kept_sizes = []
+/code/pytorch/torch/_inductor/memory.py:296:48: Builtin `set` is deprecated
+  589 |     # compute nodes' number of unmet dependencies (for schedulability)
+  590 |     # initialize the list of nodes ready to be scheduled
+  591 |     nodes_to_schedule: Set[BaseSchedulerNode] = set()
+      |                                                  ^^^
+  593 |     for node in nodes:
+  594 |         # note that .unmet_dependencies could have deps with the same name
+/code/pytorch/torch/_inductor/metrics.py:142:15: Builtin `set` is deprecated
+  281 |             row_dict
+  282 |         ), f"{len(self.column_names)} v.s. {len(row_dict)}"
+  283 |         assert set(self.column_names) == set(
+      |                 ^^^
+  285 |             row_dict.keys()
+  286 |         ), f"{set(self.column_names)} v.s. {set(row_dict.keys())}"
+/code/pytorch/torch/_inductor/metrics.py:142:41: Builtin `set` is deprecated
+  281 |             row_dict
+  282 |         ), f"{len(self.column_names)} v.s. {len(row_dict)}"
+  283 |         assert set(self.column_names) == set(
+      |                                           ^^^
+  285 |             row_dict.keys()
+  286 |         ), f"{set(self.column_names)} v.s. {set(row_dict.keys())}"
+/code/pytorch/torch/_inductor/metrics.py:144:14: Builtin `set` is deprecated
+  285 |         assert set(self.column_names) == set(
+  286 |             row_dict.keys()
+  287 |         ), f"{set(self.column_names)} v.s. {set(row_dict.keys())}"
+      |                ^^^
+  289 | 
+  290 |         row = [
+/code/pytorch/torch/_inductor/metrics.py:144:44: Builtin `set` is deprecated
+  285 |         assert set(self.column_names) == set(
+  286 |             row_dict.keys()
+  287 |         ), f"{set(self.column_names)} v.s. {set(row_dict.keys())}"
+      |                                              ^^^
+  289 | 
+  290 |         row = [
+/code/pytorch/torch/_inductor/metrics.py:418:14: Builtin `set` is deprecated
+  833 |     config_str = config.enabled_metric_tables
+  834 | 
+  835 |     enabled = set()
+      |                ^^^
+  837 |     for name in config_str.split(","):
+  838 |         name = name.strip()
+/code/pytorch/torch/_inductor/pattern_matcher.py:187:23: Builtin `set` is deprecated
+  371 |     def extend(self, other: Match) -> None:
+  372 |         if self.kwargs:
+  373 |             for key in set(self.kwargs.keys()) & set(other.kwargs.keys()):
+      |                         ^^^
+  375 |                 if self.kwargs[key] != other.kwargs[key]:
+  376 |                     raise FailedMatch("kwarg mismatch: {}", key)
+/code/pytorch/torch/_inductor/pattern_matcher.py:187:49: Builtin `set` is deprecated
+  371 |     def extend(self, other: Match) -> None:
+  372 |         if self.kwargs:
+  373 |             for key in set(self.kwargs.keys()) & set(other.kwargs.keys()):
+      |                                                   ^^^
+  375 |                 if self.kwargs[key] != other.kwargs[key]:
+  376 |                     raise FailedMatch("kwarg mismatch: {}", key)
+/code/pytorch/torch/_inductor/pattern_matcher.py:470:23: Builtin `set` is deprecated
+  937 | 
+  938 |         self.fns = fns
+  939 |         self.fns_set = set(fns)
+      |                         ^^^
+  941 |         self.users = users
+  942 | 
+/code/pytorch/torch/_inductor/pattern_matcher.py:849:51: Builtin `set` is deprecated
+ 1695 |         prior = dict(ctx.pattern_to_node)
+ 1696 |         m: MatchResult = FailedMatch("no anchor found")
+ 1697 |         for node in pattern.find_anchor_nodes(ctx, set()):
+      |                                                     ^^^
+ 1699 |             m = ctx.match(pattern, node)
+ 1700 |             if is_match(m):
+/code/pytorch/torch/_inductor/pattern_matcher.py:897:69: Builtin `set` is deprecated
+ 1791 |         )
+ 1792 |         # Check all anchor nodes match the pattern
+ 1793 |         for anchor_node in self.inner_pattern.find_anchor_nodes(ctx, set()):
+      |                                                                       ^^^
+ 1795 |             anchor_m = MatchContext([self], graph=node.graph).match(
+ 1796 |                 self.inner_pattern, anchor_node
+/code/pytorch/torch/_inductor/pattern_matcher.py:1081:22: Builtin `set` is deprecated
+ 2159 |         ) -> None:
+ 2160 |             queue = [node]
+ 2161 |             visited = set()
+      |                        ^^^
+ 2163 | 
+ 2164 |             while queue:
+/code/pytorch/torch/_inductor/pattern_matcher.py:1133:78: Builtin `set` is deprecated
+ 2263 |                     for tag_name in ["recompute", "ac_graph_id"]:
+ 2264 |                         if tag_name in old.meta:
+ 2265 |                             percolate_tags(new, tag_name, old.meta[tag_name], set(args))
+      |                                                                                ^^^
+ 2267 | 
+ 2268 |                     old.replace_all_uses_with(new)
+/code/pytorch/torch/_inductor/pattern_matcher.py:1382:33: Builtin `set` is deprecated
+ 2761 | 
+ 2762 | 
+ 2763 | _serialized_patterns: Set[str] = set()
+      |                                   ^^^
+ 2765 | 
+ 2766 | 
+/code/pytorch/torch/_inductor/pattern_matcher.py:1744:32: Builtin `set` is deprecated
+ 3485 |                     if (
+ 3486 |                         is_match(m)
+ 3487 |                         and len(set(map(get_mutation_region_id_partial, m.nodes))) != 1  # type: ignore[possibly-undefined]
+      |                                  ^^^
+ 3489 |                     ):
+ 3490 |                         continue
+/code/pytorch/torch/_inductor/pattern_matcher.py:1927:12: Builtin `set` is deprecated
+ 3851 |     # - Nodes in `ready` have been processed and are already in the correct
+ 3852 |     #   order.
+ 3853 |     ready = set()
+      |              ^^^
+ 3855 | 
+ 3856 |     # - `waiting` is a mapping from a dependency to nodes which depend on that
+/code/pytorch/torch/_inductor/pattern_matcher.py:1997:27: Builtin `set` is deprecated
+ 3991 | 
+ 3992 | 
+ 3993 | _seen_patterns: Set[str] = set()
+      |                             ^^^
+ 3995 | 
+ 3996 | 
+/code/pytorch/torch/_inductor/runtime/triton_heuristics.py:277:27: Builtin `set` is deprecated
+  551 |                 )
+  552 | 
+  553 |             seen_configs = set(self.configs)
+      |                             ^^^
+  555 | 
+  556 |             device_prop = self.device_props
+/code/pytorch/torch/_inductor/runtime/triton_heuristics.py:783:37: Builtin `set` is deprecated
+ 1563 | 
+ 1564 |     def clone_args(self, *args, **kwargs) -> Tuple[List[Any], Dict[str, Any]]:
+ 1565 |         return self.maybe_clone_args(set(), *args, **kwargs)
+      |                                       ^^^
+ 1567 | 
+ 1568 |     def benchmark_all_configs(self, *args, **kwargs):
+/code/pytorch/torch/_inductor/runtime/triton_heuristics.py:1180:11: Builtin `set` is deprecated
+ 2357 | def unique_configs(configs: List[Config]):
+ 2358 |     """Remove duplicate configurations"""
+ 2359 |     seen = set()
+      |             ^^^
+ 2361 |     pruned_configs = []
+ 2362 | 
+/code/pytorch/torch/_inductor/runtime/triton_heuristics.py:1430:44: Builtin `set` is deprecated
+ 2857 | 
+ 2858 |     hinted_configs = autotune_hints_to_configs(
+ 2859 |         inductor_meta.get("autotune_hints", set()),
+      |                                              ^^^
+ 2861 |         size_hints,
+ 2862 |         bs,
+/code/pytorch/torch/_inductor/scheduler.py:1305:20: Builtin `set` is deprecated
+ 2607 |         self, consumer: BaseSchedulerNode
+ 2608 |     ) -> Optional[BaseSchedulerNode]:
+ 2609 |         producers = set()
+      |                      ^^^
+ 2611 |         for rd in consumer.read_writes.reads:
+ 2612 |             if rd.name not in self.scheduler.name_to_buf:
+/code/pytorch/torch/_inductor/scheduler.py:1831:16: Builtin `set` is deprecated
+ 3659 |                 self.name_to_buf,
+ 3660 |                 self.name_to_fused_node,
+ 3661 |                 set(V.graph.graph_inputs.keys()),
+      |                  ^^^
+ 3663 |                 set(V.graph.get_output_names()),
+ 3664 |             )
+/code/pytorch/torch/_inductor/scheduler.py:1832:16: Builtin `set` is deprecated
+ 3661 |                 self.name_to_fused_node,
+ 3662 |                 set(V.graph.graph_inputs.keys()),
+ 3663 |                 set(V.graph.get_output_names()),
+      |                  ^^^
+ 3665 |             )
+ 3666 |         self.merge_loops()
+/code/pytorch/torch/_inductor/scheduler.py:2201:21: Builtin `set` is deprecated
+ 4399 | 
+ 4400 |     def _get_unmet_dep_nodes(self, snode: BaseSchedulerNode) -> List[BaseSchedulerNode]:
+ 4401 |         unmet_deps = set()
+      |                       ^^^
+ 4403 |         if isinstance(
+ 4404 |             snode,
+/code/pytorch/torch/_inductor/scheduler.py:2626:22: Builtin `set` is deprecated
+ 5249 |         Groups parallel nodes
+ 5250 |         """
+ 5251 |         fused_nodes = set(self.nodes)
+      |                        ^^^
+ 5253 |         count = 0
+ 5254 |         num_nodes_orig = len(self.nodes)
+/code/pytorch/torch/_inductor/scheduler.py:2732:43: Builtin `set` is deprecated
+ 5461 |         """
+ 5462 |         # since we are just returning boolean here, use slightly faster, unordered set
+ 5463 |         visited: Set[FusedSchedulerNode] = set()
+      |                                             ^^^
+ 5465 | 
+ 5466 |         def found_path(node: BaseSchedulerNode) -> bool:
+/code/pytorch/torch/_inductor/scheduler.py:3456:19: Builtin `set` is deprecated
+ 6909 | 
+ 6910 |             stack = traceback.extract_stack()
+ 6911 |             seen = set()
+      |                     ^^^
+ 6913 |             for frame in reversed(stack):
+ 6914 |                 # This is where maybe_cprofile is
+/code/pytorch/torch/_inductor/select_algorithm.py:412:32: Builtin `set` is deprecated
+  821 | 
+  822 |             body_val = self.body.getvalue()
+  823 |             self.cse.invalidate(set())  # type: ignore[arg-type]
+      |                                  ^^^
+  825 |             return body_val
+  826 | 
+/code/pytorch/torch/_inductor/sizevars.py:689:15: Builtin `set` is deprecated
+ 1375 | 
+ 1376 |     def free_symbols(self) -> Set[sympy.Symbol]:
+ 1377 |         return set(self.var_to_val.keys()) - set(self.replacements.keys())
+      |                 ^^^
+ 1379 | 
+ 1380 |     def combine_modular_indexing_pairs(self, index: sympy.Expr) -> sympy.Expr:
+/code/pytorch/torch/_inductor/sizevars.py:689:45: Builtin `set` is deprecated
+ 1375 | 
+ 1376 |     def free_symbols(self) -> Set[sympy.Symbol]:
+ 1377 |         return set(self.var_to_val.keys()) - set(self.replacements.keys())
+      |                                               ^^^
+ 1379 | 
+ 1380 |     def combine_modular_indexing_pairs(self, index: sympy.Expr) -> sympy.Expr:
+/code/pytorch/torch/_inductor/utils.py:506:12: Builtin `set` is deprecated
+ 1009 |                 if hasattr(node, "node") and node.node
+ 1010 |             ],
+ 1011 |             set(),
+      |              ^^^
+ 1013 |         )
+ 1014 |     elif isinstance(node_schedule, ir.ExternKernel):
+/code/pytorch/torch/_inductor/utils.py:511:15: Builtin `set` is deprecated
+ 1019 |         return node_schedule.origins
+ 1020 |     else:
+ 1021 |         return set()
+      |                 ^^^
+ 1023 | 
+ 1024 | 
+/code/pytorch/torch/_inductor/utils.py:525:25: Builtin `set` is deprecated
+ 1047 |             and origin.meta["original_aten"] is not None
+ 1048 |         ]
+ 1049 |         sources = sorted(set(sources))
+      |                           ^^^
+ 1051 |     elif descriptive_names == "torch":
+ 1052 |         # Bases the kernel name off of the top-level "torch" operator (i.e. post-dynamo graph)
+/code/pytorch/torch/_inductor/utils.py:536:25: Builtin `set` is deprecated
+ 1069 |                 else:
+ 1070 |                     sources.append(source_fn[1].__name__)
+ 1071 |         sources = sorted(set(sources))
+      |                           ^^^
+ 1073 |     elif descriptive_names == "inductor_node":
+ 1074 |         sources = [
+/code/pytorch/torch/_inductor/utils.py:608:20: Builtin `set` is deprecated
+ 1213 |     """Returns the set of nodes whose values depend on those within initial_queue"""
+ 1214 |     initial_queue = list(initial_queue)
+ 1215 |     dominated_set = set(initial_queue)
+      |                      ^^^
+ 1217 | 
+ 1218 |     while initial_queue:
+/code/pytorch/torch/_inductor/utils.py:636:11: Builtin `set` is deprecated
+ 1269 |     kwarg_origins = [val.origins for val in kwargs.values() if is_unrealized_node(val)]
+ 1270 |     arg_origins = [arg.origins for arg in args if is_unrealized_node(arg)]
+ 1271 |     return set(itertools.chain(*arg_origins, *kwarg_origins))
+      |             ^^^
+ 1273 | 
+ 1274 | 
+/code/pytorch/torch/_inductor/virtualized.py:149:31: Builtin `set` is deprecated
+  295 |     def __init__(self):
+  296 |         super().__init__()
+  297 |         self.removed_buffers = set()
+      |                                 ^^^
+  299 |         self.inplaced_to_remove = set()
+  300 |         self.index_dtype = "tl.int64"
+/code/pytorch/torch/_inductor/virtualized.py:150:34: Builtin `set` is deprecated
+  297 |         super().__init__()
+  298 |         self.removed_buffers = set()
+  299 |         self.inplaced_to_remove = set()
+      |                                    ^^^
+  301 |         self.index_dtype = "tl.int64"
+  302 | 
+/code/pytorch/torch/_inductor/wrapper_benchmark.py:230:15: Builtin `set` is deprecated
+  457 |             "unknown",
+  458 |         ]
+  459 |         assert set(all_events.keys()).issubset(
+      |                 ^^^
+  461 |             set(category_list)
+  462 |         ), f"{list(all_events.keys())}"
+/code/pytorch/torch/_inductor/wrapper_benchmark.py:231:12: Builtin `set` is deprecated
+  459 |         ]
+  460 |         assert set(all_events.keys()).issubset(
+  461 |             set(category_list)
+      |              ^^^
+  463 |         ), f"{list(all_events.keys())}"
+  464 | 
