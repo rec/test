@@ -14,7 +14,8 @@ import sys
 import webbrowser
 
 _COMMANDS = {
-    "hud": "HUD URL for a pull request",
+    "commit_url": "Print git ref id URL for a pull request",
+    "hud_url": "HUD URL for a pull request",
     "list": "List all pull requests",
     "ref": "Print git ref id of a pull request",
     "ref_url": "Print git ref id URL for a pull request",
@@ -27,6 +28,7 @@ _GHSTACK_SOURCE = "ghstack-source-id:"
 _HUD_PREFIX = "https://hud.pytorch.org/pr/"
 _PULL_REQUEST_RESOLVED = "Pull Request resolved:"
 _REF_PREFIX = "https://github.com/pytorch/pytorch/tree/"
+_COMMIT_PREFIX = "https://github.com/pytorch/pytorch/commit/"
 
 FIELDS = "is_open", "pull_message", "pull_number", "ref"
 DEBUG = not True
@@ -35,7 +37,7 @@ DEBUG = not True
 TODO:
 
 * bring in "errors" from elsewhere
-* Open URL in browser
+* Open URL in browser (needs testing)
 
 DONE:
 * Missing pull request!!!  # 131354
@@ -65,9 +67,7 @@ class PullRequest:
 
     @cached_property
     def pull_number(self) -> str:
-        n = _get_ghstack_message(self.ref)[0]
-        assert n.isnumeric()
-        return n
+        return  _get_ghstack_message(self.ref)[0]
 
     @cached_property
     def pull_message(self) -> list[str]:
@@ -86,8 +86,17 @@ class PullRequest:
         return info["state"] == "open"
 
     @cached_property
+    def commit_id(self) -> str:
+        return _run(f"git show-ref -s {self.ref}")[0].strip()
+
+    @cached_property
     def url(self) -> str:
         return f"{_PULL_PREFIX}{self.pull_number}"
+
+    @cached_property
+    def commit_url(self) -> str:
+        upstream, _, ref = self.ref.partition("/")
+        return f"{_COMMIT_PREFIX}{self.commit_id}"
 
     @cached_property
     def hud_url(self) -> str:
@@ -122,7 +131,7 @@ class PullRequest:
 
 @cache
 def _get_ghstack_message(ref: str) -> tuple[str, list[str]]:
-    lines = _run(f"git log --pretty=medium -1 {ref}")
+    lines = _run(f"git log --pretty=medium -1 {ref}", print_error=False)
     lines = [i[4:] for i in lines if i[:4] == "    "]
     assert lines
 
@@ -136,7 +145,10 @@ def _get_ghstack_message(ref: str) -> tuple[str, list[str]]:
     lines = lines[:end]
     while lines and not lines[-1].strip():
         lines.pop()
-    return urls[0].partition(_PULL_PREFIX)[2].strip()
+    pull = urls[0].partition(_PULL_PREFIX)[2].strip()
+    assert pull.isnumeric()
+    assert len(pull) == len('145636'), (pull, lines)
+    return pull, lines
 
 
 @dc.dataclass
@@ -168,23 +180,22 @@ class PullRequests:
         return result
 
     def __call__(self) -> None:
-        if not (method := getattr(self, f"cmd_{self.args.command}", None)):
-            sys.exit(f"Unimplemented command '{self.args.command}'")
-
         if self.args.fetch:
             _run("git fetch")
         else:
             self.load()
 
-        try:
-            method()
-        except PullError as e:
-            arg = getattr(self.args, "search", None) or self.commit
-            sys.exit(f"ERROR: {arg}: {e.args[0]}")
+        if self.args.command == "list":
+            self._list()
         else:
-            self.save()
+            value = getattr(self._matching_pull(), self.args.command)
+            print(value)
+            if self.args.command.endswith("url") and self.args.open:
+                webbrowser.open(value)
 
-    def cmd_list(self):
+        self.save()
+
+    def _list(self):
         def clean_and_sort(user: str) -> list[PullRequest]:
             pulls = []
             for p in self.pulls[user]:
@@ -205,18 +216,6 @@ class PullRequests:
         else:
             for p in clean_and_sort(self.user):
                 print(f"#{p.pull_number}: {p.subject}")
-
-    def cmd_hud_url(self):
-        print(self._matching_pull().hud_url)
-
-    def cmd_ref(self):
-        print(self._matching_pull().ref)
-
-    def cmd_ref_url(self):
-        print(self._matching_pull().ref_url)
-
-    def cmd_url(self):
-        print(self._matching_pull().url)
 
     def _get_pull(self, pull_number: str) -> PullRequest:
         user_pulls = self.pulls.values()
@@ -239,15 +238,9 @@ class PullRequests:
         except CalledProcessError as e:
             pass
 
-        pulls = [p for p in self.pulls[self.user] if self.commit in p.subject]
-        if len(pulls) == 1:
-            return pulls[0]
-
-        if not pulls:
-            raise PullError("Can't find any matches")
-
-        mat = ", ".join(p.pull_number for p in pulls)
-        raise PullError(f"Multiple matches '{mat}'")
+        if pulls := [p for p in self.pulls[self.user] if self.commit in p.subject]:
+            return pulls[-1]
+        raise PullError("Can't find any matches")
 
     @cached_property
     def commit(self) -> str:
@@ -275,17 +268,17 @@ class PullRequests:
             return r
 
 
-def _run_raw(cmd: str):
+def _run_raw(cmd: str, print_error: bool = True):
     try:
         return run(cmd, capture_output=True, text=True, check=True, shell=True).stdout
     except CalledProcessError as e:
-        if e.stderr:
+        if print_error and e.stderr:
             print(f"Error on command `{cmd}`:\n", e.stderr, file=sys.stderr)
         raise
 
 
-def _run(cmd: str):
-    return _run_raw(cmd).splitlines()
+def _run(cmd: str, print_error: bool = True):
+    return _run_raw(cmd, print_error).splitlines()
 
 
 def _run_json(cmd: str):
@@ -355,6 +348,7 @@ def parse(argv):
 
             help = "Sort alphabetically"
             p.add_argument("--sort", "-s", action="store_true", help=help)
+
         else:
             help = "An optional commit, PR index, pull request, or term to search"
             p.add_argument("commit", nargs="?", default="", help=help)
@@ -363,7 +357,11 @@ def parse(argv):
                 help = "Open the URL in the browser"
                 p.add_argument("--open", "-o", action="store_true", help=help)
 
-    return parser.parse_args()
+    args = sys.argv[1:]
+    if not (args and args[0] and args[0][0] != "-"):
+        args = "list", *args
+
+    return parser.parse_args(args)
 
 
 if __name__ == '__main__':
@@ -372,4 +370,6 @@ if __name__ == '__main__':
     except PullError as e:
         if DEBUG:
             raise
-        sys.exit(f'ERROR: {e.args[0]}')
+        msg = f'ERROR: {e.args[0]}'
+        print(msg)
+        sys.exit(-1)
