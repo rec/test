@@ -37,7 +37,8 @@ DEBUG = not True
 TODO:
 
 * bring in "errors" from elsewhere
-* Open URL in browser (needs testing)
+* Handle closed pull requests not in a ghstack branch better
+
 """
 
 
@@ -174,7 +175,8 @@ class PullRequests:
     def __call__(self) -> None:
         if self.args.fetch:
             _run("git fetch upstream")
-        else:
+
+        if not (self.args.ignore_cache or self.args.rewrite_cache):
             self.load()
 
         if self.args.command == "list":
@@ -185,7 +187,8 @@ class PullRequests:
             if self.args.command.endswith("url") and self.args.open:
                 webbrowser.open(value)
 
-        self.save()
+        if not self.args.ignore_cache:
+            self.save()
 
     def _list(self):
         def clean_and_sort(user: str) -> list[PullRequest]:
@@ -321,9 +324,17 @@ def parse(argv):
     add_parser = parser.add_subparsers(help="Commands:", dest="command").add_parser
     parsers = Namespace(**{k: add_parser(k, help=v) for k, v in _COMMANDS.items()})
 
+    # remaining bdeghjklmnpqtvxyz
+
     for name, p in vars(parsers).items():
-        help = "Refresh everything from github, including git fetch"
+        help = "Perform git fetch"
         p.add_argument("--fetch", "-f", action="store_true")
+
+        help = "Ignore cache"
+        p.add_argument("--ignore-cache", "-i", action="store_true")
+
+        help = "Rewrite cache"
+        p.add_argument("--rewrite-cache", "-w", action="store_true")
 
         help = "The github user name"
         p.add_argument("--user", "-u", default=None, help=help)
@@ -338,7 +349,7 @@ def parse(argv):
             help = "Also show closed pull requests"
             p.add_argument("--closed", "-c", action="store_true", help=help)
 
-            help = "Reverse old"
+            help = "Reverse order of pull requests"
             p.add_argument("--reverse", "-r", action="store_true", help=help)
 
             help = "Sort alphabetically"
@@ -353,8 +364,9 @@ def parse(argv):
                 p.add_argument("--open", "-o", action="store_true", help=help)
 
     args = sys.argv[1:]
-    if not (args and args[0] and args[0][0] != "-"):
-        args = "list", *args
+    if "-h" not in args and "--help" not in args:
+        if not (args and args[0] and args[0][0] != "-"):
+            args = "list", *args
 
     return parser.parse_args(args)
 
