@@ -38,14 +38,6 @@ TODO:
 
 * bring in "errors" from elsewhere
 * Open URL in browser (needs testing)
-
-DONE:
-* Missing pull request!!!  # 131354
-* Don't save non-trivial data from others
-* Only load user pulls unless --all is set
-* sort list (default by number, or alphabetic, also reverse)
-* only show open pull requests
-* not load the pull request data for everything by default
 """
 
 
