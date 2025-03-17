@@ -1,12 +1,10 @@
 import dataclasses as dc
 import argparse
-import itertools
 from argparse import Namespace
-from enum import Enum
 from functools import cache, cached_property
 from operator import attrgetter
 from pathlib import Path
-from typing import Any, Iterator, Optional, Sequence, Union
+from typing import Any, Optional, Sequence
 import json
 import os
 from subprocess import run, CalledProcessError
@@ -60,7 +58,7 @@ class PullRequest:
 
     @cached_property
     def pull_number(self) -> str:
-        return  _get_ghstack_message(self.ref)[0]
+        return _get_ghstack_message(self.ref)[0]
 
     @cached_property
     def pull_message(self) -> list[str]:
@@ -115,7 +113,7 @@ class PullRequest:
         if len(parts) == 5:
             remote, gh, user, index, branch = parts
             if branch != "orig":
-                raise PullError(f"Waiting for orig branch")
+                raise PullError("Waiting for orig branch")
             if remote == "upstream" and gh == "gh" and index.isnumeric():
                 return user, int(index)
 
@@ -139,8 +137,7 @@ def _get_ghstack_message(ref: str) -> tuple[str, list[str]]:
     while lines and not lines[-1].strip():
         lines.pop()
     pull = urls[0].partition(_PULL_PREFIX)[2].strip()
-    assert pull.isnumeric()
-    assert len(pull) == len('145636'), (pull, lines)
+    assert pull.isnumeric() and len(pull) in (6, 7), pull  # We're around 145636 now
     return pull, lines
 
 
@@ -222,7 +219,7 @@ class PullRequests:
         try:
             return pull_requests_by_number[pull_number]
         except KeyError:
-            raise PullError(f"no pull request")
+            raise PullError("no pull request") from None
 
     def _matching_pull(self) -> PullRequest:
         if self.commit.startswith("#"):
@@ -233,7 +230,7 @@ class PullRequests:
 
         try:
             return self._get_pull(_get_ghstack_message(self.commit)[0])
-        except CalledProcessError as e:
+        except CalledProcessError:
             pass
 
         if pulls := [p for p in self.pulls[self.user] if self.commit in p.subject]:
