@@ -27,7 +27,7 @@ def add_bool():
 
 
 SUB_RE = re.compile(r"\bdef (_?)is_.*\(.*\):")
-SUB_RE = re.compile(r"\bdef (_?)is_.*\(.*\):")
+SUB_RE = re.compile(r"\bdef (_?)is_.*\):")
 
 def _fix_stream(it: t.Iterator[str]) -> tuple[list[str], bool]:
     lines = []
