@@ -6,7 +6,7 @@ from typing_extensions import override, reveal_type
 _T = TypeVar("_T")
 
 
-class Module:
+class Module(ABC):
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         return self.forward(*args, **kwargs)
 
