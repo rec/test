@@ -1,0 +1,304 @@
+diff --git a/third_party/nlohmann b/third_party/nlohmann
+deleted file mode 160000
+index 87cda1d6646..00000000000
+--- a/third_party/nlohmann
++++ /dev/null
+@@ -1 +0,0 @@
+-Subproject commit 87cda1d6646592ac5866dc703c8e1839046a6806
+diff --git a/torch/_inductor/lowering.py b/torch/_inductor/lowering.py
+index c0fd365ebdd..2fefe3f2470 100644
+--- a/torch/_inductor/lowering.py
++++ b/torch/_inductor/lowering.py
+@@ -173,7 +173,7 @@ def tag_to_layout_constraint(tag):
+     raise AssertionError(f"Unknown layout constraint tag: {tag}")
+ 
+ 
+-def assert_nyi(cond, msg):
++def assert_nyi(cond: bool, msg: str):
+     if not cond:
+         raise NotImplementedError(f"inductor does not support {msg}")
+ 
+@@ -294,7 +294,7 @@ def get_overloads(aten_fn):
+     return aten_fn
+ 
+ 
+-def in_namespace(op, namespace):
++def in_namespace(op, namespace: str):
+     if isinstance(op, torch._ops.OpOverloadPacket):
+         return namespace in op._qualified_op_name
+     elif isinstance(op, torch._ops.OpOverload):
+@@ -702,7 +702,7 @@ def to_dtype(x: TensorBox, dtype: torch.dtype, copy=False):
+     if src_dtype == dtype:
+         return clone(x) if copy else x
+ 
+-    def _to_dtype(x):
++    def _to_dtype(x: TensorBox):
+         return ops.to_dtype(x, dtype, src_dtype=src_dtype)
+ 
+     return make_pointwise(_to_dtype, override_return_dtype=dtype)(x)
+@@ -811,7 +811,7 @@ def _device_put(x: TensorBox, device: torch.device, non_blocking=False):
+ 
+ 
+ def register_pointwise(
+-    aten_fn,
++    aten_fn: OpOverloadPacket,
+     name=None,
+     broadcast=True,
+     type_promotion_kind=ELEMENTWISE_TYPE_PROMOTION_KIND.DEFAULT,
+@@ -1208,7 +1208,7 @@ def as_strided_copy(x, size, stride, storage_offset=None):
+     return clone(result)
+ 
+ 
+-def pointwise_cat(inputs, dim=0):
++def pointwise_cat(inputs, dim: int=0):
+     # (inclusive, exclusive)
+     inputs_ranges: list[tuple[sympy.Expr, sympy.Expr]] = []
+     prev_end = 0
+@@ -1595,7 +1595,7 @@ def cat(inputs, dim=0):
+     def is_reduction(t):
+         return isinstance(t, ir.ComputedBuffer) and isinstance(t.data, ir.Reduction)
+ 
+-    def can_fuse_reduction(t):
++    def can_fuse_reduction(t: Buffer | IRNode | TensorBox | TorchBindObject):
+         if isinstance(t, (TensorBox, ir.StorageBox)):
+             return can_fuse_reduction(unwrap_tensor(t))
+         return (
+@@ -1610,7 +1610,7 @@ def cat(inputs, dim=0):
+     # fusing reducutions into computed concat buffer can cause regressions.
+     fusable_reduction = any(can_fuse_reduction(t) for t in inputs)
+ 
+-    def should_lower_cat_input(x) -> bool:
++    def should_lower_cat_input(x: IRNode) -> bool:
+         # Unrealized inputs will not be storage and layouts, and we dont want to realize
+         # them in case we want to fuse
+         if ir.is_storage_and_layout(x):
+@@ -1633,7 +1633,7 @@ def cat(inputs, dim=0):
+     if cpu_device:
+         return TensorBox(ir.ConcatKernel.create(inputs, dim))
+ 
+-    def op_count(x):
++    def op_count(x: Buffer | IRNode | TensorBox | TorchBindObject):
+         if isinstance(x, (TensorBox, ir.StorageBox)):
+             return op_count(unwrap_tensor(x))
+ 
+@@ -1842,7 +1842,7 @@ def unsqueeze_(x, dim):
+     return x
+ 
+ 
+-def _validate_dim(x, dim, offset=0):
++def _validate_dim(x, dim, offset: bool | int=0):
+     dim = V.graph.sizevars.shape_env.evaluate_expr(sympy.sympify(dim))
+     ndim = len(x.get_size())
+     if dim < 0:
+@@ -1861,7 +1861,7 @@ def glu(x, dim=-1):
+     return mul(a, sigmoid(b))
+ 
+ 
+-def fallback_handler(kernel, add_to_fallback_set=True):
++def fallback_handler(kernel: OpOverload, add_to_fallback_set=True):
+     if add_to_fallback_set:
+         fallbacks.add(kernel)
+ 
+@@ -1919,7 +1919,7 @@ def unsupported_input_tensor(t: torch.Tensor, node=None):
+     return False
+ 
+ 
+-def unsupported_output_tensor(t: torch.Tensor, node=None):
++def unsupported_output_tensor(t: torch.Tensor, node: Node | None=None):
+     "Do not support writing tensor but can read from it"
+     supported_complex_views = (
+         aten.view.dtype,
+@@ -1944,7 +1944,7 @@ def fallback_node_due_to_unsupported_type(node: torch.fx.Node, allow_cpu_inputs=
+     if node.target is aten.lift_fresh_copy.default:
+         return False
+ 
+-    def check_skip_condition(inp_out_node, is_output):
++    def check_skip_condition(inp_out_node: Node, is_output):
+         if not isinstance(inp_out_node, torch.fx.Node):
+             return False
+ 
+@@ -1972,7 +1972,7 @@ def fallback_node_due_to_unsupported_type(node: torch.fx.Node, allow_cpu_inputs=
+     return check_skip_condition(node, is_output=True)
+ 
+ 
+-def make_fallback(op, layout_constraint=None, warn=True, override_decomp=False):
++def make_fallback(op: AutoFunctionalized, layout_constraint=None, warn=True, override_decomp=False):
+     assert op not in decompositions or override_decomp, (
+         f"both a fallback and a decomp for same op: {op}"
+     )
+@@ -2004,7 +2004,7 @@ def make_fallback(op, layout_constraint=None, warn=True, override_decomp=False):
+             " Get help from the inductor team if unsure, don't pick arbitrarily to unblock yourself.",
+         )
+ 
+-    def register_fallback(op_overload):
++    def register_fallback(op_overload: HigherOrderOperator | OpOverload):
+         add_needs_realized_inputs(op_overload)
+         if layout_constraint is not None:
+             add_layout_constraint(op_overload, layout_constraint)
+@@ -2114,7 +2114,7 @@ def _foobar(_):
+ 
+ 
+ @functools.lru_cache(1)
+-def _warn_triton_random(salt):
++def _warn_triton_random(salt: float):
+     log.info("using triton random, expect difference from eager")
+ 
+ 
+@@ -2485,7 +2485,7 @@ def constrain_to_fx_strides(fx_node, *args, **kwargs):
+ def sdpa_constraint(fx_node, *args, **kwargs):
+     # sdpa requires dense last dimension]
+ 
+-    def apply_constraint(idx, arg, fx_arg):
++    def apply_constraint(idx: int, arg, fx_arg):
+         if not isinstance(arg, ir.IRNode):
+             return arg
+ 
+@@ -2596,7 +2596,7 @@ def sdpa_constraint(fx_node, *args, **kwargs):
+                 ir.ExternKernel.realize_input(arg), meta_stride_expr
+             )
+ 
+-        def is_aligned(x):
++        def is_aligned(x: IRNode | TensorBox):
+             return (V.graph.sizevars.size_hint(x.get_size()[-1]) % ALIGNMENT) == 0
+ 
+         if isinstance(arg.data, ir.BaseView):
+@@ -3026,7 +3026,7 @@ def tensor(data, *, dtype=None, device=None, layout=None, pin_memory=False):
+         ranges.append(sympy.Integer(len(data)))
+ 
+         def inner_fn(index):
+-            def binary_search(start, end):
++            def binary_search(start: int, end: int):
+                 assert start < end
+                 if end - start == 1:
+                     return ops.constant(data[start], dtype)
+@@ -3137,7 +3137,7 @@ def _assert_tensor_metadata(
+     return None
+ 
+ 
+-def _full(fill_value, device, dtype, size):
++def _full(fill_value: int, device, dtype, size):
+     value = fill_value
+     if not isinstance(fill_value, (int, float)) and hasattr(value, "value"):
+         value = value.value
+@@ -3172,7 +3172,7 @@ def full_like(x, fill_value, **kwargs):
+     return create_tensor_like(tensor_constructor(fill_value))(x, **kwargs)
+ 
+ 
+-def tensor_constructor(fill_value):
++def tensor_constructor(fill_value: int):
+     # torch.zeros, torch.ones, etc
+     def inner(
+         *size,
+@@ -3242,7 +3242,7 @@ def create_tensor_like(creation_fn):
+     return _constant_like
+ 
+ 
+-def constant_like(fill_value):
++def constant_like(fill_value: float | int):
+     return create_tensor_like(tensor_constructor(fill_value))
+ 
+ 
+@@ -3449,7 +3449,7 @@ def index_output_size_and_inner_fn(
+     tensor_size,
+     indices_loaders,
+     indexed_size,
+-    x_loader,
++    x_loader: None,
+     check,
+     wrap_neg=True,
+ ):
+@@ -3822,7 +3822,7 @@ def scatter_fallback(
+     op_overload: torch._ops.OpOverload,
+     self,
+     dim: int,
+-    index,
++    index: int,
+     src,
+     *,
+     reduce: Optional[str] = None,
+@@ -3947,7 +3947,7 @@ def scatter_reduce_(self, dim: int, index, src, reduce, *, include_self: bool =
+             # src is a scalar
+             return ops.constant(src, self.get_dtype())
+ 
+-    def backend_reduce_str(reduce):
++    def backend_reduce_str(reduce: str | None):
+         if reduce == "sum":
+             return "atomic_add"
+         else:
+@@ -4018,7 +4018,7 @@ def upsample_nearestnd(
+         if scale is not None:
+             inv_scales[i] = 1.0 / scale
+ 
+-    def scale_fn(x, scale, size):
++    def scale_fn(x, scale, size: int):
+         # Nearest Exact: input_index = round(scale * (output_index + 0.5) - 0.5)
+         #                            = floor(scale * (output_index + 0.5))
+         # Nearest: input_index = floor(scale * output_index)
+@@ -4291,7 +4291,7 @@ def range_mask(i: sympy.Expr, high: sympy.Expr, low: sympy.Expr):
+ 
+ 
+ def constant_boundary_condition(
+-    x, fill_value, padding=None, pad_fill_value=1.0, dim=None
++    x: TensorBox, fill_value, padding=None, pad_fill_value=1.0, dim=None
+ ):
+     h = x.get_size()[-dim:]
+     x_loader = x.make_loader()
+@@ -4320,7 +4320,7 @@ def constant_boundary_condition(
+     return load
+ 
+ 
+-def pooling_size(x, i, kernel_size, stride, padding, ceil_mode, *, dilation=None):
++def pooling_size(x, i: int, kernel_size: Sequence[int], stride: Sequence[int], padding, ceil_mode, *, dilation=None):
+     if dilation is None:
+         dilation = [1] * len(padding)
+ 
+@@ -4350,14 +4350,14 @@ def pooling_size(x, i, kernel_size, stride, padding, ceil_mode, *, dilation=None
+     return x_out, ceil_mode
+ 
+ 
+-def should_fallback_max_pool_with_indices(kernel_size, *, n_dim):
++def should_fallback_max_pool_with_indices(kernel_size: Sequence[int], *, n_dim):
+     kernel_size = pad_listlike(kernel_size, n_dim)
+     window_size = functools.reduce(operator.mul, kernel_size)
+     return window_size > 25
+ 
+ 
+ def max_pool_checks(
+-    x, kernel_size, stride, padding, dilation, n_dim, *, assert_fallback=None
++    x, kernel_size, stride, padding, dilation, n_dim: int, *, assert_fallback=None
+ ):
+     if padding == 0:
+         padding = [0] * n_dim
+@@ -4756,7 +4756,7 @@ def max_pool2d_with_indices_backward(
+         return out
+ 
+ 
+-def pad_adaptive_loader(x, pad_val=0.0):
++def pad_adaptive_loader(x, pad_val: float=0.0):
+     x_loader = x.make_loader()
+ 
+     def load(prefix, increments, start_indices, end_indices):
+@@ -5929,12 +5929,12 @@ def var_mean_welford_(x, axis, *, correction, keepdim, return_mean):
+     axis = _validate_reduction_axis(x, axis)
+     rnumel = sympy_product(size[i] for i in axis)
+ 
+-    def get_constant_or_index_expr(x, dtype):
++    def get_constant_or_index_expr(x: int, dtype):
+         if isinstance(x, sympy.Expr) and not x.is_number:
+             return ops.to_dtype(ops.index_expr(x, torch.int64), dtype)
+         return ops.constant(x, dtype)
+ 
+-    def scale_fn(data):
++    def scale_fn(data: TensorBox):
+         c = get_constant_or_index_expr(correction, dtype)
+         N = get_constant_or_index_expr(rnumel, dtype)
+         zero = ops.constant(0, dtype)
+@@ -6575,7 +6575,7 @@ register_pointwise_numeric(aten.nextafter)
+ from .codegen.common import BackendFeature, pointwise_overrides_data
+ 
+ 
+-def _get_pointwise_overrides(ns, name):
++def _get_pointwise_overrides(ns, name: str):
+     data = pointwise_overrides_data[name]
+     op = getattr(ns, data.name, None)
+     if op is None:

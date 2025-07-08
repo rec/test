@@ -33,9 +33,7 @@ class Implementation(Module):
 
 
 imp = Implementation()
-print(imp(2, "3"))
-print(imp("2", "3"))
-
-# mypy says:
-# copy_type.py:34: error: Argument 1 to "__call__" of "Implementation" has incompatible type "str"; expected "int"  [arg-type]
+print(imp(2, "3"))    # mypy accepts this line
+print(imp("2", "3"))  # mypy gives a useful error:
+# copy_type.py:39: error: Argument 1 to "__call__" of "Implementation" has incompatible type "str"; expected "int"  [arg-type]
 # Found 1 error in 1 file (checked 1 source file)

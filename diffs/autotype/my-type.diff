@@ -1,0 +1,1057 @@
+commit c470148631ab6e8ebbd9f9e628ec5668c029d16c
+Author: Tom Ritchford <tom@swirly.com>
+Date:   Tue Apr 8 16:49:27 2025 +0000
+
+    [inductor] Add typing to lowering.py
+
+diff --git a/torch/_inductor/lowering.py b/torch/_inductor/lowering.py
+index 7189957c6c0..9123fe73d6f 100644
+--- a/torch/_inductor/lowering.py
++++ b/torch/_inductor/lowering.py
+@@ -1,4 +1,3 @@
+-# mypy: allow-untyped-defs
+ from __future__ import annotations
+ 
+ import contextlib
+@@ -13,7 +12,16 @@ import textwrap
+ import warnings
+ from collections import defaultdict
+ from collections.abc import Iterable, Sequence
+-from typing import Any, Callable, cast, Optional, TYPE_CHECKING, TypeVar, Union
++from typing import (
++    Any,
++    Callable,
++    cast,
++    Optional,
++    Protocol,
++    TYPE_CHECKING,
++    TypeVar,
++    Union,
++)
+ from typing_extensions import ParamSpec
+ from unittest.mock import patch
+ 
+@@ -26,6 +34,7 @@ import torch.utils._pytree as pytree
+ from torch._dynamo.utils import counters
+ from torch._higher_order_ops.associative_scan import associative_scan_op
+ from torch._higher_order_ops.triton_kernel_wrap import triton_kernel_wrapper_mutation
++from torch._ops import OpOverload, OpOverloadPacket
+ from torch._prims_common import (
+     canonicalize_dim,
+     canonicalize_dims,
+@@ -38,6 +47,7 @@ from torch._prims_common import (
+     is_float_dtype,
+     is_integer_dtype,
+     Number,
++    NumberTypeAnnotation,
+ )
+ from torch.fx.experimental.sym_node import magic_methods, method_to_operator
+ from torch.fx.experimental.symbolic_shapes import free_unbacked_symbols
+@@ -88,7 +98,12 @@ if TYPE_CHECKING:
+ 
+ 
+ _T = TypeVar("_T")
++_U = TypeVar("_U")
++_V = TypeVar("_V")
++
+ _P = ParamSpec("_P")
++_Q = ParamSpec("_Q")
++_R = ParamSpec("_R")
+ 
+ # TODO(jansel): we should implement decomps or lowerings for these
+ # https://github.com/pytorch/torchdynamo/issues/327
+@@ -102,25 +117,23 @@ FALLBACK_ALLOW_LIST = OrderedSet(
+ log = logging.getLogger(__name__)
+ lowerings: dict[Union[Callable[..., Any], str], Callable[..., Any]] = {}
+ # Use maybe_layout_constraints to access this dict, we lazily register tag-based layout constraints
+-_maybe_layout_constraints: dict[
+-    torch._ops.OpOverload, Optional[Callable[..., Any]]
+-] = {}
+-fallbacks = OrderedSet[torch._ops.OpOverload]()
++_maybe_layout_constraints: dict[OpOverload, Optional[Callable[..., Any]]] = {}
++fallbacks = OrderedSet[OpOverload]()
+ aten = torch.ops.aten
+ tr_c10d = torch.ops.tr_c10d
+ prims = torch.ops.prims
+-needs_realized_inputs = OrderedSet[torch._ops.OpOverload]()
+-foreach_ops = OrderedSet[torch._ops.OpOverload](
++needs_realized_inputs = OrderedSet[OpOverload]()
++foreach_ops = OrderedSet[OpOverload](
+     [torch._higher_order_ops._foreach_map]  # type: ignore[list-item]
+ )
+ # TODO(rec): torch._higher_order_ops._foreach_map is not an OpOverload
+ # so why is it in foreach_ops?
+-inplace_foreach_ops = OrderedSet[torch._ops.OpOverload]()
+-inplaceable_foreach_ops: dict[torch._ops.OpOverload, torch._ops.OpOverload] = {}
++inplace_foreach_ops = OrderedSet[OpOverload]()
++inplaceable_foreach_ops: dict[OpOverload, OpOverload] = {}
+ quantized_decomposed = torch.ops.quantized_decomposed
+ 
+ 
+-def cur_node_has_non_foreach_users():
++def cur_node_has_non_foreach_users() -> bool:
+     for node in V.graph.current_node.users:
+         for user in node.users:
+             if not (user.op == "call_function" and (user.target in foreach_ops)):
+@@ -132,7 +145,9 @@ def cur_node_has_non_foreach_users():
+ # group by device, whether any of the inputs are dynamic
+ # note arg_pairs may or may not be a pair
+ # foreach_map for example just passes output buffers here
+-def group_foreach_args(arg_pairs: Iterable[Union[tuple[Any, Any], Any]]):
++def group_foreach_args(
++    arg_pairs: Iterable[Union[tuple[Any, Any], Any]],
++) -> defaultdict[tuple[torch.device, bool], list[Any]]:
+     out = defaultdict(list)
+     unpack_args = False
+     for i, args in enumerate(arg_pairs):
+@@ -164,7 +179,7 @@ def maybe_layout_constraints(fn: Callable[..., Any]) -> Optional[Callable[..., A
+     return None
+ 
+ 
+-def tag_to_layout_constraint(tag):
++def tag_to_layout_constraint(tag: torch.Tag) -> Optional[Callable[..., Any]]:
+     if tag == torch._C.Tag.needs_exact_strides:
+         return constrain_to_fake_tensors
+     if tag == torch._C.Tag.needs_contiguous_strides:  # type: ignore[attr-defined]
+@@ -176,23 +191,27 @@ def tag_to_layout_constraint(tag):
+     raise AssertionError(f"Unknown layout constraint tag: {tag}")
+ 
+ 
+-def assert_nyi(cond, msg):
++def assert_nyi(cond: bool, msg: str) -> None:
+     if not cond:
+         raise NotImplementedError(f"inductor does not support {msg}")
+ 
+ 
+-def add_needs_realized_inputs(fn):
++def add_needs_realized_inputs(fn: Any) -> None:
+     if isinstance(fn, (list, set, tuple, OrderedSet)):  # noqa: set_linter
+-        return [add_needs_realized_inputs(x) for x in fn]
+-    needs_realized_inputs.add(fn)
+-    if isinstance(fn, torch._ops.OpOverloadPacket):
+-        needs_realized_inputs.update(
+-            getattr(fn, overload) for overload in fn.overloads()
+-        )
++        for x in fn:
++            add_needs_realized_inputs(x)
++    else:
++        needs_realized_inputs.add(fn)
++        if isinstance(fn, OpOverloadPacket):
++            needs_realized_inputs.update(
++                getattr(fn, overload) for overload in fn.overloads()
++            )
+ 
+ 
+-def add_layout_constraint(fn, constraint):
+-    if isinstance(fn, torch._ops.OpOverloadPacket):
++def add_layout_constraint(
++    fn: Union[OpOverload, OpOverloadPacket], constraint: Callable[..., Any]
++) -> None:
++    if isinstance(fn, OpOverloadPacket):
+         for overload in fn.overloads():
+             _maybe_layout_constraints[getattr(fn, overload)] = constraint
+     else:
+@@ -243,7 +262,7 @@ DTYPE_ID_LOOKUP = {
+ }
+ 
+ 
+-def decode_dtype(dtype: int):
++def decode_dtype(dtype: Union[int, torch.dtype]) -> torch.dtype:
+     if not isinstance(dtype, int):
+         return dtype
+     assert dtype in DTYPE_ID_LOOKUP, f"id {dtype} missing from DTYPE_ID_LOOKUP"
+@@ -251,7 +270,7 @@ def decode_dtype(dtype: int):
+     return dtype
+ 
+ 
+-def is_integer_type(x):
++def is_integer_type(x: Any) -> bool:
+     if isinstance(x, TensorBox):
+         return is_integer_dtype(x.get_dtype()) or is_boolean_dtype(x.get_dtype())
+     elif isinstance(x, sympy.Expr):
+@@ -260,35 +279,38 @@ def is_integer_type(x):
+         return isinstance(x, int)
+ 
+ 
+-def is_boolean_type(x):
++def is_boolean_type(x: Any) -> bool:
+     if isinstance(x, TensorBox):
+         return is_boolean_dtype(x.get_dtype())
+     else:
+         return isinstance(x, bool)
+ 
+ 
+-def get_promoted_dtype(*args, type_promotion_kind: ELEMENTWISE_TYPE_PROMOTION_KIND):
+-    def construct_input(inp):
+-        if isinstance(inp, (Number, sympy.Basic)):
+-            return inp
+-        else:
++def get_promoted_dtype(
++    *args: Any, type_promotion_kind: ELEMENTWISE_TYPE_PROMOTION_KIND
++) -> torch.dtype:
++    def construct_input(
++        inp: Union[NumberTypeAnnotation, sympy.Basic, IRNode],
++    ) -> Union[NumberTypeAnnotation, sympy.Basic, torch.Tensor]:
++        if isinstance(inp, IRNode):
+             dim = len(inp.get_size())
+             # construct a tmp tensor to feed into torch.result_type
+             return torch.zeros([1] * dim, dtype=inp.get_dtype())
++        else:
++            return inp
+ 
+     inps = [construct_input(arg) for arg in args]
+     _, dtype = elementwise_dtypes(*inps, type_promotion_kind=type_promotion_kind)
+     return dtype
+ 
+ 
+-def get_overloads(aten_fn):
+-    if not isinstance(aten_fn, (list, tuple)):
+-        aten_fn = [aten_fn]
+-    else:
+-        aten_fn = list(aten_fn)
++def get_overloads(
++    aten_fn: Union[OpOverloadPacket, Sequence[OpOverloadPacket]],
++) -> Sequence[Any]:
++    aten_fn = list(aten_fn) if isinstance(aten_fn, Sequence) else [aten_fn]
+ 
+     for fn in list(aten_fn):
+-        if isinstance(fn, torch._ops.OpOverloadPacket):
++        if isinstance(fn, OpOverloadPacket):
+             for overload in fn.overloads():
+                 other_fn = getattr(fn, overload)
+                 if other_fn not in lowerings:
+@@ -297,10 +319,10 @@ def get_overloads(aten_fn):
+     return aten_fn
+ 
+ 
+-def in_namespace(op, namespace):
+-    if isinstance(op, torch._ops.OpOverloadPacket):
++def in_namespace(op: Any, namespace: str) -> bool:
++    if isinstance(op, OpOverloadPacket):
+         return namespace in op._qualified_op_name
+-    elif isinstance(op, torch._ops.OpOverload):
++    elif isinstance(op, OpOverload):
+         return namespace in op.name()
+     return False
+ 
+@@ -340,7 +362,7 @@ def transform_args(
+         ).get_device()
+ 
+         # sometimes args are an immutable list so we can't mutate them
+-        def promote(arg):
++        def promote(arg: ir.IRNode) -> ir.IRNode:
+             if isinstance(arg, TensorBox):
+                 return to_dtype(arg, dtype)
+             elif isinstance(arg, ir.Constant):
+@@ -377,7 +399,10 @@ def transform_args(
+     return args, kwargs
+ 
+ 
+-def _register_foreach_lowering(aten_fn, decomp_fn):
++def _register_foreach_lowering(
++    aten_fn: Union[OpOverloadPacket, Sequence[OpOverloadPacket]],
++    decomp_fn: Callable[..., Any],
++) -> Callable[..., Any]:
+     """
+     Add a foreach lowering to lowerings dict.
+ 
+@@ -390,7 +415,7 @@ def _register_foreach_lowering(aten_fn, decomp_fn):
+     """
+ 
+     @functools.wraps(decomp_fn)
+-    def wrapped(*args, **kwargs):
++    def wrapped(*args: Any, **kwargs: Any) -> Any:
+         assert len(args) <= 2
+         out = decomp_fn(*args, **kwargs)
+         validate_ir(out)
+@@ -403,11 +428,11 @@ def _register_foreach_lowering(aten_fn, decomp_fn):
+ 
+ 
+ def _register_lowering(
+-    aten_fn,
+-    decomp_fn,
+-    broadcast,
++    aten_fn: Union[OpOverloadPacket, Sequence[OpOverloadPacket]],
++    decomp_fn: Callable[..., Any],
++    broadcast: bool,
+     type_promotion_kind: Optional[ELEMENTWISE_TYPE_PROMOTION_KIND],
+-    convert_input_to_bool,
++    convert_input_to_bool: bool,
+     lowering_dict,
+ ):
+     """
+@@ -422,7 +447,7 @@ def _register_lowering(
+     """
+ 
+     @functools.wraps(decomp_fn)
+-    def wrapped(*args, **kwargs):
++    def wrapped(*args: Any, **kwargs: Any) -> Any:
+         args: list[Any] = list(args)
+         kwargs: dict[str, Any] = dict(kwargs)
+         unpacked = False
+@@ -458,12 +483,12 @@ def _register_lowering(
+ 
+ 
+ def register_lowering(
+-    aten_fn,
+-    broadcast=False,
++    aten_fn: Union[OpOverloadPacket, Sequence[OpOverloadPacket]],
++    broadcast: bool = False,
+     type_promotion_kind: Optional[
+         ELEMENTWISE_TYPE_PROMOTION_KIND
+     ] = ELEMENTWISE_TYPE_PROMOTION_KIND.DEFAULT,
+-    convert_input_to_bool=False,
++    convert_input_to_bool: bool = False,
+     lowering_dict=lowerings,
+ ) -> Callable[[Callable[_P, _T]], Callable[_P, _T]]:
+     """
+@@ -479,7 +504,9 @@ def register_lowering(
+     )
+ 
+ 
+-def broadcast_symbolic_shapes(a, b):
++def broadcast_symbolic_shapes(
++    a: Sequence[sympy.Expr], b: Sequence[sympy.Expr]
++) -> tuple[sympy.Expr]:
+     """
+     Broadcasting logic based on symbolic shapes.
+ 
+@@ -505,7 +532,11 @@ def broadcast_symbolic_shapes(a, b):
+     return tuple(reversed(output))
+ 
+ 
+-def promote_constants(inputs, override_return_dtype=None, type_promotion_kind=None):
++def promote_constants(
++    inputs: Sequence[IRNode],
++    override_return_dtype: Optional[torch.dtype] = None,
++    type_promotion_kind: Optional[ELEMENTWISE_TYPE_PROMOTION_KIND] = None,
++) -> Sequence[IRNode]:
+     assert override_return_dtype is None or type_promotion_kind is None, (
+         "only one of override_return_dtype or type_promotion_kind may be given"
+     )
+@@ -516,21 +547,21 @@ def promote_constants(inputs, override_return_dtype=None, type_promotion_kind=No
+     if not any(isinstance(x, (sympy.Basic, int, float)) for x in inputs):
+         return inputs
+     if all(isinstance(x, (int, float, sympy.Basic)) for x in inputs):
++        assert type_promotion_kind is not None
+         dtype = override_return_dtype or get_promoted_dtype(
+             *inputs, type_promotion_kind=type_promotion_kind
+         )
+ 
+-        def const_func(x):
++        def const_func(x: Union[int, float, sympy.Basic]) -> ir.IRNode:
++            device = decode_device(None)
+             if isinstance(x, sympy.Basic):
+-                return ir.IndexingConstant(
+-                    index=x, dtype=dtype, device=decode_device(None)
+-                )
++                return ir.IndexingConstant(index=x, dtype=dtype, device=device)
+             else:
+-                return ir.Constant(value=x, dtype=dtype, device=decode_device(None))
++                return ir.Constant(value=x, dtype=dtype, device=device)
+ 
+         return [const_func(x) for x in inputs]
+     ex = next(x for x in inputs if isinstance(x, (TensorBox, ExpandView, ir.Constant)))
+-    out = []
++    out: list[IRNode] = []
+     for x in inputs:
+         if isinstance(x, (int, float)):
+             out.append(
+@@ -551,20 +582,26 @@ def promote_constants(inputs, override_return_dtype=None, type_promotion_kind=No
+                 )
+             )
+         else:
++            assert isinstance(x, IRNode), type(x)
+             out.append(x)
+ 
+     return out
+ 
+ 
++class PointwiseCallable(Protocol):
++    def __call__(self, *inputs: TensorBox, alpha: Optional[int] = None) -> IRNode:
++        pass
++
++
+ def make_pointwise(
+-    fn,
+-    override_return_dtype=None,
+-    override_device=None,
+-    override_fn_when_input_bool=None,
+-    allow_alpha=False,
+-    triton_fallback=None,
+-):
+-    def inner(*inputs: TensorBox, alpha=None):
++    fn: Callable[_P, _T],
++    override_return_dtype: Optional[torch.dtype] = None,
++    override_device: Optional[torch.device] = None,
++    override_fn_when_input_bool: Optional[Callable[_Q, _U]] = None,
++    allow_alpha: bool = False,
++    triton_fallback: Optional[Callable[_R, _V]] = None,
++) -> PointwiseCallable:
++    def inner(*inputs: TensorBox, alpha: Optional[int] = None) -> IRNode:
+         if triton_fallback is not None and any(
+             isinstance(inp, IRNode) and is_triton(inp) for inp in inputs
+         ):
+@@ -642,7 +679,7 @@ def make_pointwise(
+     return inner
+ 
+ 
+-def make_foreach_pointwise(pw_fn, allow_alpha=False):
++def make_foreach_pointwise(pw_fn, allow_alpha: bool = False):
+     def inner(*inputs: list[list[TensorBox]], alpha=1):
+         realize_outputs = (
+             len(V.graph.current_node.users) == 0
+@@ -702,7 +739,7 @@ def make_foreach_pointwise(pw_fn, allow_alpha=False):
+ 
+ def to_dtype(
+     x: Union[TensorBox, ShapeAsConstantBuffer], dtype: torch.dtype, copy: bool = False
+-):
++) -> IRNode:
+     src_dtype = x.get_dtype()
+     if src_dtype == dtype:
+         return clone(x) if copy else x
+@@ -714,7 +751,7 @@ def to_dtype(
+ 
+ 
+ @register_lowering(torch._higher_order_ops._foreach_map, type_promotion_kind=None)
+-def _foreach_map(subgraph, *args, **kwargs):
++def _foreach_map(subgraph, *args: Any, **kwargs: Any):
+     """
+     This lowers an invocation of foreach_map
+     The way this works is that an arbitrary N-arg func is provided by the user, looped over by the
+@@ -774,7 +811,7 @@ def _convert_element_type(x: TensorBox, dtype: torch.dtype):
+     return to_dtype(x, dtype, copy=True)
+ 
+ 
+-def to_dtype_bitcast(x: TensorBox, dtype: torch.dtype, *, copy=False):
++def to_dtype_bitcast(x: TensorBox, dtype: torch.dtype, *, copy: bool = False):
+     x_dtype = x.get_dtype()
+     if x_dtype == dtype:
+         return clone(x) if copy else x
+@@ -803,7 +840,13 @@ def _view_dtype(x: TensorBox, dtype: torch.dtype):
+     return to_dtype_bitcast(x, dtype)
+ 
+ 
+-def to_device(x: TensorBox, device: torch.device, *, copy=False, non_blocking=False):
++def to_device(
++    x: TensorBox,
++    device: torch.device,
++    *,
++    copy: bool = False,
++    non_blocking: bool = False,
++):
+     device = decode_device(device)
+     if x.get_device() == device:
+         return clone(x) if copy else x
+@@ -811,19 +854,19 @@ def to_device(x: TensorBox, device: torch.device, *, copy=False, non_blocking=Fa
+ 
+ 
+ @register_lowering(prims.device_put, type_promotion_kind=None)
+-def _device_put(x: TensorBox, device: torch.device, non_blocking=False):
++def _device_put(x: TensorBox, device: torch.device, non_blocking: bool = False):
+     return to_device(x, device, copy=True, non_blocking=non_blocking)
+ 
+ 
+ def register_pointwise(
+-    aten_fn,
++    aten_fn: Union[OpOverloadPacket, Sequence[OpOverloadPacket]],
+     name=None,
+-    broadcast=True,
++    broadcast: bool = True,
+     type_promotion_kind=ELEMENTWISE_TYPE_PROMOTION_KIND.DEFAULT,
+-    convert_input_to_bool=False,
++    convert_input_to_bool: bool = False,
+     override_return_dtype=None,
+     override_fn_when_input_bool=None,
+-    allow_alpha=False,
++    allow_alpha: bool = False,
+     triton_fallback=None,
+ ):
+     """A pointwise function that maps ops.{name} to inputs"""
+@@ -865,10 +908,10 @@ def register_frexp():
+     name = "frexp"
+     frexp = ops_wrapper("frexp")
+ 
+-    def frexp0(*args, **kwargs):
++    def frexp0(*args: Any, **kwargs: Any) -> Any:
+         return frexp(*args, **kwargs)[0]  # type: ignore[index]
+ 
+-    def frexp1(*args, **kwargs):
++    def frexp1(*args: Any, **kwargs: Any) -> Any:
+         return frexp(*args, **kwargs)[1]  # type: ignore[index]
+ 
+     pw_fns = [
+@@ -876,7 +919,7 @@ def register_frexp():
+         make_pointwise(frexp1, override_return_dtype=torch.int32),
+     ]
+ 
+-    def fn(*args, **kwargs):
++    def fn(*args: Any, **kwargs: Any) -> Any:
+         return pw_fns[0](*args, **kwargs), pw_fns[1](*args, **kwargs)
+ 
+     fn = register_lowering(
+@@ -895,9 +938,9 @@ register_frexp()
+ 
+ 
+ def register_foreach_pointwise(
+-    aten_fn,
++    aten_fn: Union[OpOverloadPacket, Sequence[OpOverloadPacket]],
+     pointwise_lowering_fn,
+-    allow_alpha=False,
++    allow_alpha: bool = False,
+ ):
+     fn = make_foreach_pointwise(pointwise_lowering_fn, allow_alpha=allow_alpha)
+     fn = _register_foreach_lowering(aten_fn, fn)
+@@ -1177,7 +1220,7 @@ def permute(x, dims):
+ 
+ 
+ @register_lowering(aten.slice, type_promotion_kind=None)
+-def slice_(x, dim=0, start=0, end=2**63, step=1, clamp=True):
++def slice_(x, dim=0, start=0, end=2**63, step=1, clamp: bool = True):
+     assert isinstance(x, TensorBox)
+     dim = _validate_dim(x, dim, 0)
+     return TensorBox(ir.SliceView.create(x.data, dim, start, end, step, clamp=clamp))
+@@ -1661,7 +1704,7 @@ def cat(inputs, dim=0):
+     MAX_COMPLEX_POINTWISE_CAT = 8
+     MAX_SIMPLE_OP_COUNT = 2
+ 
+-    def additional_pointwise_ops(op: torch._ops.OpOverload):
++    def additional_pointwise_ops(op: OpOverload):
+         return op in (aten.cat.default, aten.constant_pad_nd.default)
+ 
+     if len(inputs) <= MAX_COMPLEX_POINTWISE_CAT or (
+@@ -1870,11 +1913,11 @@ def glu(x, dim=-1):
+     return mul(a, sigmoid(b))
+ 
+ 
+-def fallback_handler(kernel, add_to_fallback_set=True):
++def fallback_handler(kernel, add_to_fallback_set: bool = True):
+     if add_to_fallback_set:
+         fallbacks.add(kernel)
+ 
+-    def handler(*args, **kwargs):
++    def handler(*args: Any, **kwargs: Any) -> Any:
+         def wrap_tensors(x):
+             return TensorBox.create(x) if isinstance(x, ir.IRNode) else x
+ 
+@@ -1914,7 +1957,7 @@ def unsupported_input_tensor(t: torch.Tensor, node=None):
+         # allow bitcast, views, memory movement, but not arithmetic
+         # TODO: delete once triton adds native support
+         return not (
+-            isinstance(node.target, torch._ops.OpOverload)
++            isinstance(node.target, OpOverload)
+             and node.target
+             in (
+                 aten.view.dtype,
+@@ -1922,7 +1965,7 @@ def unsupported_input_tensor(t: torch.Tensor, node=None):
+                 aten.clone.default,
+                 aten._scaled_mm.default,
+             )
+-            or (isinstance(node.target, torch._ops.OpOverload) and is_view(node.target))
++            or (isinstance(node.target, OpOverload) and is_view(node.target))
+         )
+ 
+     return False
+@@ -1941,7 +1984,9 @@ def unsupported_output_tensor(t: torch.Tensor, node=None):
+     return t.is_cpu and config.disable_cpp_codegen
+ 
+ 
+-def fallback_node_due_to_unsupported_type(node: torch.fx.Node, allow_cpu_inputs=True):
++def fallback_node_due_to_unsupported_type(
++    node: torch.fx.Node, allow_cpu_inputs: bool = True
++):
+     # Custom fallback lowering
+     if node.target is aten.view_as_complex.default:
+         return False
+@@ -1981,7 +2026,9 @@ def fallback_node_due_to_unsupported_type(node: torch.fx.Node, allow_cpu_inputs=
+     return check_skip_condition(node, is_output=True)
+ 
+ 
+-def make_fallback(op, layout_constraint=None, warn=True, override_decomp=False):
++def make_fallback(
++    op, layout_constraint=None, warn: bool = True, override_decomp: bool = False
++):
+     assert op not in decompositions or override_decomp, (
+         f"both a fallback and a decomp for same op: {op}"
+     )
+@@ -2021,11 +2068,11 @@ def make_fallback(op, layout_constraint=None, warn=True, override_decomp=False):
+             fallback_handler(op_overload)
+         )
+ 
+-    if isinstance(op, torch._ops.OpOverloadPacket):
++    if isinstance(op, OpOverloadPacket):
+         for ol in op.overloads():
+             op_overload = getattr(op, ol)
+             register_fallback(op_overload)
+-    elif isinstance(op, (torch._ops.OpOverload, torch._ops.HigherOrderOperator)):
++    elif isinstance(op, (OpOverload, torch._ops.HigherOrderOperator)):
+         register_fallback(op)
+     else:
+         raise RuntimeError(f"Unsupported fallback {op} with type {type(op)}")
+@@ -2140,7 +2187,7 @@ make_fallback(aten.randint)
+ 
+ 
+ @register_lowering(aten.rand)
+-def rand(*args, **kwargs):
++def rand(*args: Any, **kwargs: Any) -> Any:
+     if kwargs.get("generator", None) is not None:
+         return fallback_rand_generator(*args, **kwargs)
+     elif config.fallback_random:
+@@ -2150,7 +2197,7 @@ def rand(*args, **kwargs):
+ 
+ 
+ @register_lowering(aten.randn)
+-def randn(*args, **kwargs):
++def randn(*args: Any, **kwargs: Any) -> Any:
+     if kwargs.get("generator", None) is not None:
+         return fallback_randn_generator(*args, **kwargs)
+     elif config.fallback_random:
+@@ -2418,21 +2465,27 @@ def bucketize(
+     return result
+ 
+ 
+-def require_dense(_, *args, **kwargs):
++def require_dense(
++    _, *args: Any, **kwargs: Any
++) -> tuple[tuple[Any, ...], dict[str, Any]]:
+     args, kwargs = pytree.tree_map_only(
+         ir.IRNode, ir.ExternKernel.require_stride1, (args, kwargs)
+     )
+     return args, kwargs
+ 
+ 
+-def require_contiguous(_, *args, **kwargs):
++def require_contiguous(
++    _, *args: Any, **kwargs: Any
++) -> tuple[tuple[Any, ...], dict[str, Any]]:
+     args, kwargs = pytree.tree_map_only(
+         ir.IRNode, ir.ExternKernel.require_contiguous, (args, kwargs)
+     )
+     return args, kwargs
+ 
+ 
+-def require_contiguous_strides(_, *args, **kwargs):
++def require_contiguous_strides(
++    _, *args: Any, **kwargs: Any
++) -> tuple[tuple[Any, ...], dict[str, Any]]:
+     # TODO: combine this with require_contiguous after
+     # https://github.com/pytorch/pytorch/pull/148235 lands.
+     args, kwargs = pytree.tree_map_only(
+@@ -2474,7 +2527,9 @@ def constrain_to_fake_tensors(args, kwargs, fake_args, fake_kwargs):
+     return args, kwargs
+ 
+ 
+-def constrain_to_fx_strides(fx_node, *args, **kwargs):
++def constrain_to_fx_strides(
++    fx_node, *args: Any, **kwargs: Any
++) -> tuple[tuple[Any, ...], dict[str, Any]]:
+     def apply_constraint(arg, fx_arg):
+         if isinstance(arg, ir.IRNode):
+             stride_order = ir.get_stride_order(
+@@ -2492,7 +2547,9 @@ def constrain_to_fx_strides(fx_node, *args, **kwargs):
+     return args, kwargs
+ 
+ 
+-def sdpa_constraint(fx_node, *args, **kwargs):
++def sdpa_constraint(
++    fx_node, *args: Any, **kwargs: Any
++) -> tuple[tuple[Any, ...], dict[str, Any]]:
+     # sdpa requires dense last dimension]
+ 
+     def apply_constraint(idx, arg, fx_arg):
+@@ -2839,7 +2896,7 @@ make_fallback(aten.index_reduce)
+ # Register with type_promotion_kind None.
+ # For example, fp16.copy_(fp32) should **not** promote the first input's dtype.
+ @register_lowering(aten.copy, type_promotion_kind=None)
+-def copy(self, src, non_blocking=False):
++def copy(self, src, non_blocking: bool = False):
+     x = src
+     if self.get_device() != src.get_device():
+         x = to_device(x, self.get_device())
+@@ -3013,7 +3070,7 @@ def _unwrap(x):
+ 
+ 
+ @register_lowering([torch.tensor, aten.scalar_tensor])
+-def tensor(data, *, dtype=None, device=None, layout=None, pin_memory=False):
++def tensor(data, *, dtype=None, device=None, layout=None, pin_memory: bool = False):
+     assert_nyi(layout in (None, torch.strided), f"layout={layout}")
+     assert_nyi(not pin_memory, "pin_memory")
+     if isinstance(_unwrap(data), int):
+@@ -3192,7 +3249,7 @@ def tensor_constructor(fill_value):
+         dtype=None,
+         device=None,
+         layout=None,
+-        pin_memory=False,
++        pin_memory: bool = False,
+         memory_format=None,
+     ):
+         assert_nyi(names is None, "named tensors")
+@@ -3237,7 +3294,13 @@ def create_tensor_like(creation_fn):
+     """
+ 
+     def _constant_like(
+-        x, *, dtype=None, device=None, layout=None, pin_memory=False, memory_format=None
++        x,
++        *,
++        dtype=None,
++        device=None,
++        layout=None,
++        pin_memory: bool = False,
++        memory_format=None,
+     ):
+         assert_nyi(not pin_memory, "pin_memory")
+         assert_nyi(layout in (None, torch.strided), f"layout={layout}")
+@@ -3358,7 +3421,7 @@ def full(size, fill_value, **kwargs):
+ 
+ 
+ @register_lowering(aten.gather, type_promotion_kind=None)
+-def gather(x, dim, index, sparse_grad=False):
++def gather(x, dim, index, sparse_grad: bool = False):
+     # sparse_grad doesn't affect forward computation,
+     # and backward tracing is taken care of by AOT Autograd
+     assert isinstance(x, TensorBox)
+@@ -3395,7 +3458,13 @@ def gather(x, dim, index, sparse_grad=False):
+ 
+ 
+ @register_lowering(aten.embedding, type_promotion_kind=None)
+-def embedding(weight, indices, padding_idx=-1, scale_grad_by_freq=False, sparse=False):
++def embedding(
++    weight,
++    indices,
++    padding_idx=-1,
++    scale_grad_by_freq: bool = False,
++    sparse: bool = False,
++):
+     if sparse:
+         return fallback_handler(aten.embedding.default)(
+             weight, indices, padding_idx, scale_grad_by_freq, sparse
+@@ -3463,7 +3532,7 @@ def index_output_size_and_inner_fn(
+     indexed_size,
+     x_loader,
+     check,
+-    wrap_neg=True,
++    wrap_neg: bool = True,
+ ):
+     # Note that behavior of indexing differs when there are non consecutive
+     # tensors. In this case, the tensor index is pulled to the beginning.
+@@ -3538,7 +3607,7 @@ def index_impl(x, indices, check):
+     )
+ 
+ 
+-def index_impl_helper(x, indices, check, wrap_neg=True):
++def index_impl_helper(x, indices, check, wrap_neg: bool = True):
+     assert isinstance(indices, (list, tuple))
+     x_loader = x.make_loader()
+     indices, tensor_indices = check_and_broadcast_indices(indices, x.get_device())
+@@ -3601,14 +3670,14 @@ def _unsafe_index(x, indices):
+ # and
+ # https://github.com/pytorch/torchdynamo/issues/1863
+ @register_lowering(aten.index_put, type_promotion_kind=None)
+-def index_put(x, indices, values, accumulate=False):
++def index_put(x, indices, values, accumulate: bool = False):
+     return index_put_impl_(
+         clone(x), indices, values, accumulate, check=True, may_realize=False
+     )
+ 
+ 
+ @register_lowering(aten._unsafe_index_put)
+-def _unsafe_index_put(x, indices, values, accumulate=False):
++def _unsafe_index_put(x, indices, values, accumulate: bool = False):
+     return index_put_impl_(
+         clone(x), indices, values, accumulate, check=False, may_realize=False
+     )
+@@ -3629,20 +3698,22 @@ def index_put_fallback(self, indices, values, accumulate):
+ 
+ 
+ @register_lowering(aten.index_put_, type_promotion_kind=None)
+-def index_put_(self, indices, values, accumulate=False):
++def index_put_(self, indices, values, accumulate: bool = False):
+     return index_put_impl_(
+         self, indices, values, accumulate, check=True, may_realize=True
+     )
+ 
+ 
+ @register_lowering(inductor_prims._unsafe_index_put_, type_promotion_kind=None)
+-def _unsafe_index_put_(self, indices, values, accumulate=False):
++def _unsafe_index_put_(self, indices, values, accumulate: bool = False):
+     return index_put_impl_(
+         self, indices, values, accumulate, check=False, may_realize=True
+     )
+ 
+ 
+-def index_put_impl_(self, indices, values, accumulate, check, may_realize=False):
++def index_put_impl_(
++    self, indices, values, accumulate, check, may_realize: bool = False
++):
+     if may_realize:
+ 
+         def try_get_name(x):
+@@ -3834,7 +3905,7 @@ def scatter(x, dim: int, index, src, **kwargs):
+ 
+ 
+ def scatter_fallback(
+-    op_overload: torch._ops.OpOverload,
++    op_overload: OpOverload,
+     self,
+     dim: int,
+     index,
+@@ -4110,7 +4181,7 @@ def _upsample_nearest_exact3d(
+     )
+ 
+ 
+-def _create_constants(*args, dtype):
++def _create_constants(*args: Any, dtype):
+     return tuple(ops.constant(a, dtype) for a in args)
+ 
+ 
+@@ -4485,7 +4556,7 @@ def _low_memory_max_pool_with_offsets(
+     stride,
+     padding,
+     dilation,
+-    ceil_mode=False,
++    ceil_mode: bool = False,
+ ):
+     n_dim = len(kernel_size)
+ 
+@@ -4602,7 +4673,7 @@ def max_pool2d_with_indices(
+     stride=None,
+     padding=0,
+     dilation=1,
+-    ceil_mode=False,
++    ceil_mode: bool = False,
+ ):
+     return _max_pool_with_indices(
+         x, kernel_size, stride, padding, dilation, ceil_mode, n_dim=2
+@@ -4617,7 +4688,7 @@ def max_pool3d_with_indices(
+     stride=None,
+     padding=0,
+     dilation=1,
+-    ceil_mode=False,
++    ceil_mode: bool = False,
+ ):
+     return _max_pool_with_indices(
+         x, kernel_size, stride, padding, dilation, ceil_mode, n_dim=3
+@@ -5231,8 +5302,8 @@ def avg_pool2d(
+     kernel_size,
+     stride=(),
+     padding=0,
+-    ceil_mode=False,
+-    count_include_pad=True,
++    ceil_mode: bool = False,
++    count_include_pad: bool = True,
+     divisor_override=None,
+ ):
+     return _avg_poolnd(
+@@ -5253,8 +5324,8 @@ def avg_pool3d(
+     kernel_size,
+     stride=(),
+     padding=0,
+-    ceil_mode=False,
+-    count_include_pad=True,
++    ceil_mode: bool = False,
++    count_include_pad: bool = True,
+     divisor_override=None,
+ ):
+     return _avg_poolnd(
+@@ -5835,7 +5906,7 @@ def _make_reduction_inner(x, *, axis, keepdims, dtype, override_return_dtype):
+ 
+ 
+ def make_reduction(reduction_type: ReductionType, override_return_dtype=None):
+-    def inner(x, axis=None, keepdims=False, *, dtype=None):
++    def inner(x, axis=None, keepdims: bool = False, *, dtype=None):
+         kwargs = _make_reduction_inner(
+             x,
+             axis=axis,
+@@ -5869,7 +5940,7 @@ def _make_scan_inner(x, *, axis, dtype):
+ 
+ 
+ @register_lowering(aten.mean)
+-def mean(x, axis=None, keepdim=False, *, dtype=None):
++def mean(x, axis=None, keepdim: bool = False, *, dtype=None):
+     if dtype is not None:
+         x = to_dtype(x, dtype)
+     size = x.get_size()
+@@ -5991,14 +6062,14 @@ def var_mean_helper_(x, *, axis, correction, keepdim, return_mean):
+ 
+ 
+ @register_lowering([aten.var, prims.var])
+-def var_(x, axis=None, *, correction=None, keepdim=False):
++def var_(x, axis=None, *, correction=None, keepdim: bool = False):
+     return var_mean_helper_(
+         x, axis=axis, correction=correction, keepdim=keepdim, return_mean=False
+     )
+ 
+ 
+ @register_lowering(aten.var_mean)
+-def var_mean(x, axis=None, *, correction=None, keepdim=False):
++def var_mean(x, axis=None, *, correction=None, keepdim: bool = False):
+     return var_mean_helper_(
+         x, axis=axis, correction=correction, keepdim=keepdim, return_mean=True
+     )
+@@ -6081,7 +6152,7 @@ def pow(a, b):
+     return pow_native(a, b)
+ 
+ 
+-def mutate_to(changed, val, unsafe_alias=False):
++def mutate_to(changed, val, unsafe_alias: bool = False):
+     if isinstance(changed, TensorBox):
+         changed_data = changed.data
+     else:
+@@ -6124,7 +6195,7 @@ def fill_(x, fill_value):
+ 
+ 
+ @register_lowering(aten.copy_, type_promotion_kind=None)
+-def copy_(dst, src, non_blocking=False):
++def copy_(dst, src, non_blocking: bool = False):
+     if dst is src:
+         # dst.copy_(dst) can happen from the reinplacing pass
+         return dst
+@@ -6253,7 +6324,7 @@ def fmod(a, b):
+ 
+ 
+ @register_lowering([aten.sum, prims.sum])
+-def sum_(x, axis=None, keepdims=False, *, dtype=None):
++def sum_(x, axis=None, keepdims: bool = False, *, dtype=None):
+     if (
+         is_integer_dtype(x.get_dtype()) or is_boolean_dtype(x.get_dtype())
+     ) and dtype is None:
+@@ -6387,7 +6458,7 @@ def cummin(x, axis=None):
+ 
+ 
+ @register_lowering(aten.prod)
+-def prod(x, axis=None, keepdims=False, *, dtype=None):
++def prod(x, axis=None, keepdims: bool = False, *, dtype=None):
+     if (
+         is_integer_dtype(x.get_dtype()) or is_boolean_dtype(x.get_dtype())
+     ) and dtype is None:
+@@ -6398,13 +6469,13 @@ def prod(x, axis=None, keepdims=False, *, dtype=None):
+ 
+ 
+ @register_lowering(aten.any)
+-def reduce_any(x, dim=None, keepdim=False):
++def reduce_any(x, dim=None, keepdim: bool = False):
+     x = to_dtype(x, torch.bool)
+     return make_reduction("any")(x, axis=dim, keepdims=keepdim)
+ 
+ 
+ @register_lowering(aten.max, type_promotion_kind=None)
+-def reduce_max(x, dim=None, keepdim=False):
++def reduce_max(x, dim=None, keepdim: bool = False):
+     if dim is not None:
+         return (
+             reduce_amax(x, axis=dim, keepdims=keepdim),
+@@ -6415,7 +6486,7 @@ def reduce_max(x, dim=None, keepdim=False):
+ 
+ 
+ @register_lowering(aten.min, type_promotion_kind=None)
+-def reduce_min(x, dim=None, keepdim=False):
++def reduce_min(x, dim=None, keepdim: bool = False):
+     if dim is not None:
+         return (
+             reduce_amin(x, axis=dim, keepdims=keepdim),
+@@ -6443,7 +6514,7 @@ sort_fallback = fallback_handler(aten.sort.stable, add_to_fallback_set=False)
+ 
+ 
+ @register_lowering(aten.sort.stable, type_promotion_kind=None)
+-def sort_stable(x, *, stable=None, dim=-1, descending=False):
++def sort_stable(x, *, stable=None, dim=-1, descending: bool = False):
+     if stable is None:
+         stable = False
+ 
+@@ -6483,7 +6554,7 @@ def sort_stable(x, *, stable=None, dim=-1, descending=False):
+ 
+ 
+ @register_lowering(aten.sort.default, type_promotion_kind=None)
+-def sort(x, dim=-1, descending=False):
++def sort(x, dim=-1, descending: bool = False):
+     return sort_stable(x, stable=False, dim=dim, descending=descending)
+ 
+ 
+@@ -6609,7 +6680,7 @@ def _get_pointwise_overrides(ns, name):
+         if data.triton is None:
+             return fallback_handler(op)
+ 
+-    if isinstance(op, torch._ops.OpOverloadPacket):
++    if isinstance(op, OpOverloadPacket):
+         for olname in op.overloads():
+             ol = getattr(op, olname)
+             yield ol, data.type_promotion_kind, make_triton_fallback(ol)
+@@ -6681,7 +6752,7 @@ def register_foreach_inplace(aten_op, outplace_aten_op, outplace_op):
+     inplaceable_foreach_ops[outplace_aten_op] = aten_op
+     inplace_foreach_ops.add(aten_op)
+ 
+-    def fn(*args, **kwargs):
++    def fn(*args: Any, **kwargs: Any) -> Any:
+         results = outplace_op(*args, **kwargs)
+         mut_results = []
+         for arg, result in zip(args[0], results):
+@@ -6714,7 +6785,7 @@ register_foreach_inplace(
+ 
+ def register_inplace(aten_op, outplace_op):
+     @register_lowering(aten_op, type_promotion_kind=None)
+-    def fn(*args, **kwargs):
++    def fn(*args: Any, **kwargs: Any) -> Any:
+         result = outplace_op(*args, **kwargs)
+         result = to_dtype(result, args[0].get_dtype())
+         return mutate_to(args[0], result)
+@@ -6799,7 +6870,7 @@ def sym_sum(args):
+ 
+ 
+ @register_lowering(aten._foobar)
+-def foobar(self, *args, **kwargs):
++def foobar(self, *args: Any, **kwargs: Any) -> tuple[tuple[Any, ...], dict[str, Any]]:
+     raise NotImplementedError("Helpful for debugging")
+ 
+ 
+@@ -7043,7 +7114,9 @@ def _sink_tokens(tokens):
+ 
+ 
+ @register_lowering(torch.ops.higher_order.with_effects, type_promotion_kind=None)
+-def with_effects(token, op, *args, **kwargs):
++def with_effects(
++    token, op, *args: Any, **kwargs: Any
++) -> tuple[tuple[Any, ...], dict[str, Any]]:
+     result = ir.EffectfulKernel.create(op, *args, **kwargs)
+ 
+     from torch._higher_order_ops.effects import get_effect_key
+@@ -7148,14 +7221,12 @@ jagged_lowerings.register_jagged_ops()
+ 
+ 
+ @contextlib.contextmanager
+-def force_fallback(op: torch._ops.OpOverload):
++def force_fallback(op: OpOverload):
+     """
+     A context manager to force fallback an op. Used in unit test
+     for FallbackKernel.
+     """
+-    assert isinstance(op, torch._ops.OpOverload), (
+-        "Only OpOverload to make the clean up easier"
+-    )
++    assert isinstance(op, OpOverload), "Only OpOverload to make the clean up easier"
+     old_handler = lowerings.get(op)
+     try:
+         register_lowering(op)(fallback_handler(op))
+diff --git a/torch/_prims_common/__init__.py b/torch/_prims_common/__init__.py
+index 9ad643e7c1c..d4afe58e11c 100644
+--- a/torch/_prims_common/__init__.py
++++ b/torch/_prims_common/__init__.py
+@@ -12,6 +12,7 @@ from typing import (
+     Any,
+     Callable,
+     cast,
++    get_args,
+     NamedTuple,
+     Optional,
+     overload,
+@@ -59,7 +60,10 @@ NumberTypeType: TypeAlias = Union[type[bool], type[int], type[float], type[compl
+ NumberType: TypeAlias = Union[bool, int, float, complex]
+ RealNumberType: TypeAlias = Union[bool, int, float]
+ 
+-Number = (bool, int, float, complex, torch.SymInt, torch.SymFloat, torch.SymBool)
++NumberTypeAnnotation: TypeAlias = Union[
++    bool, int, float, complex, torch.SymInt, torch.SymFloat, torch.SymBool
++]
++Number = get_args(NumberTypeAnnotation)
+ # I don't call it Integral because numbers.Integral includes bool, but IntLike
+ # does not
+ Dim = int
