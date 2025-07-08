@@ -1,0 +1,190 @@
+diff --git a/torch/_inductor/ir.py b/torch/_inductor/ir.py
+index 2e19f019b5b..d917bf333d9 100644
+--- a/torch/_inductor/ir.py
++++ b/torch/_inductor/ir.py
+@@ -2959,7 +2959,7 @@ class GenericView(BaseView):
+     __repr__ = __str__
+ 
+     @classmethod
+-    def create(cls, x, new_size, reindex):  # type: ignore[no-untyped-def]
++    def create(cls, x: StorageBox, new_size, reindex: int):  # type: ignore[no-untyped-def]
+         return cls(data=x, size=list(new_size), reindex=reindex)
+ 
+     def get_size(self) -> Sequence[Expr]:
+@@ -2978,7 +2978,7 @@ class View(GenericView):
+         return idx
+ 
+     @classmethod
+-    def create(cls, x, new_size):  # type: ignore[no-untyped-def, override]
++    def create(cls, x: StorageBox, new_size):  # type: ignore[no-untyped-def, override]
+         assert isinstance(new_size, (tuple, list))
+         old_size, new_size = cls.resolve_negative_size(x.get_size(), new_size)
+ 
+@@ -3295,7 +3295,7 @@ class SliceView(View):
+             )
+             return clamped_full
+ 
+-        def clamp_wrap(val, lower, upper, default):  # type: ignore[no-untyped-def]
++        def clamp_wrap(val, lower: int, upper, default: int):  # type: ignore[no-untyped-def]
+             if val is None:
+                 return default
+             val = cls.handle_negative_index(val, dim_size)
+@@ -3306,7 +3306,7 @@ class SliceView(View):
+         return start, end
+ 
+     @classmethod
+-    def create(cls, x, dim, start, end, step=1, clamp=True):  # type: ignore[no-untyped-def, override]
++    def create(cls, x: StorageBox, dim, start: int, end, step=1, clamp=True):  # type: ignore[no-untyped-def, override]
+         step = sympy.expand(step)
+         assert isinstance(step, sympy.Expr) or step > 0
+         try:
+@@ -3675,7 +3675,7 @@ class FlexibleLayout(Layout):
+         return list(reversed(reversed_strides))
+ 
+     @staticmethod
+-    def fill_ordered(sizes, order):  # type: ignore[no-untyped-def]
++    def fill_ordered(sizes, order: Sequence[int] | list[int]):  # type: ignore[no-untyped-def]
+         """
+         Create a stride based on the order the dimensions should be filled in.
+ 
+@@ -3692,7 +3692,7 @@ class FlexibleLayout(Layout):
+         return strides
+ 
+     @staticmethod
+-    def stride_ordered(sizes, order):  # type: ignore[no-untyped-def]
++    def stride_ordered(sizes, order: list[int]):  # type: ignore[no-untyped-def]
+         """
+         Create a stride based on the sorted order of a permuted range.
+ 
+@@ -3915,7 +3915,7 @@ class MutationLayoutSHOULDREMOVE(Layout):
+         return self.real_layout().storage_size()
+ 
+     def get_buffer(self) -> Buffer:
+-        def unwrap_views(target):  # type: ignore[no-untyped-def]
++        def unwrap_views(target: IRNode):  # type: ignore[no-untyped-def]
+             if isinstance(target, MutationLayoutSHOULDREMOVE):
+                 return unwrap_views(target.target)
+             if isinstance(target, BaseView):
+@@ -4041,7 +4041,7 @@ class Buffer(IRNode, CodegenSymbol):
+         assert isinstance(self.layout, FlexibleLayout)
+         self.layout = self.layout.as_stride_order(order, allow_padding=allow_padding)
+ 
+-    def freeze_layout_with_fill_order(self, order) -> None:  # type: ignore[no-untyped-def]
++    def freeze_layout_with_fill_order(self, order: list[int]) -> None:  # type: ignore[no-untyped-def]
+         assert isinstance(self.layout, FlexibleLayout)
+         self.layout = self.layout.as_fill_order(order)
+ 
+@@ -4419,7 +4419,7 @@ class ComputedBuffer(OperationBuffer):
+         if not V.graph.has_feature(self, BackendFeature.PREFER_STORE_LOOP_ORDER):
+             memory_addrs.extend(body.get_read_exprs())
+ 
+-        def simplify_and_reorder(x_vars, support_vars, sizes, simplify_loops):  # type: ignore[no-untyped-def]
++        def simplify_and_reorder(x_vars, support_vars, sizes, simplify_loops: bool):  # type: ignore[no-untyped-def]
+             sizes, reindex0, reindex1 = self._apply_loop_reordering(
+                 x_vars, support_vars, sizes, memory_addrs
+             )
+@@ -5028,7 +5028,7 @@ class ConcatKernel(NopKernel):
+         return kernel
+ 
+     @classmethod
+-    def can_realize_into_without_copy(cls, src, dst=None):  # type: ignore[no-untyped-def]
++    def can_realize_into_without_copy(cls, src: IRNode | StorageBox, dst=None):  # type: ignore[no-untyped-def]
+         if isinstance(src, TensorBox):
+             # unwrap a TensorBox
+             return cls.can_realize_into_without_copy(src.data, dst)
+@@ -5059,7 +5059,7 @@ class ConcatKernel(NopKernel):
+         )
+ 
+     @classmethod
+-    def realize_into(cls, src, dst):  # type: ignore[no-untyped-def]
++    def realize_into(cls, src: IRNode | TensorBox, dst: ReinterpretView):  # type: ignore[no-untyped-def]
+         # Attempt to turn this into a ReinterpretView rather than assert.
+         # This has concessions around layout, as as_storage_and_layout
+         # can cause us to go from flexible to fixed layout.
+@@ -5119,12 +5119,12 @@ class ExternKernel(InputsKernel):
+ 
+     def __init__(  # type: ignore[no-untyped-def]
+         self,
+-        name,
++        name: None,
+         layout,
+         inputs,
+         constant_args=(),
+         kwargs=None,
+-        output_view=None,
++        output_view: None=None,
+         python_kernel_name=None,
+         cpp_kernel_name=None,
+         ordered_kwargs_for_cpp_kernel=(),
+@@ -5384,7 +5384,7 @@ class ExternKernel(InputsKernel):
+         )
+ 
+     @classmethod
+-    def convert_to_reinterpret_view(cls, x):  # type: ignore[no-untyped-def]
++    def convert_to_reinterpret_view(cls, x: BaseView):  # type: ignore[no-untyped-def]
+         """
+         In order to pass this to an extern kernel we need a
+         ReinterpretView not a View.  This allows us to avoid some
+@@ -5453,7 +5453,7 @@ class ExternKernel(InputsKernel):
+         )
+ 
+     @classmethod
+-    def realize_input(cls, x):  # type: ignore[no-untyped-def]
++    def realize_input(cls, x: BaseView | IRNode | ShapeAsConstantBuffer | TensorBox):  # type: ignore[no-untyped-def]
+         if x is None:
+             return NoneAsConstantBuffer()
+         if isinstance(x, (sympy.Expr, sympy.logic.boolalg.Boolean, int)):
+@@ -5653,13 +5653,13 @@ class ExternKernel(InputsKernel):
+         return x
+ 
+     @classmethod
+-    def require_exact_strides(cls, x, exact_strides, allow_padding=False):  # type: ignore[no-untyped-def]
++    def require_exact_strides(cls, x: ShapeAsConstantBuffer | TensorBox, exact_strides, allow_padding=False):  # type: ignore[no-untyped-def]
+         return cls.require_strides(
+             x, exact_strides=exact_strides, allow_padding=allow_padding
+         )
+ 
+     @classmethod
+-    def require_stride_order(cls, x, order, allow_padding=False):  # type: ignore[no-untyped-def]
++    def require_stride_order(cls, x: TensorBox, order: Sequence[int] | list[int], allow_padding=False):  # type: ignore[no-untyped-def]
+         return cls.require_strides(x, order=order, allow_padding=allow_padding)
+ 
+     @classmethod
+@@ -5795,7 +5795,7 @@ class ExternKernel(InputsKernel):
+             args.extend(self.codegen_const_args())
+         return args
+ 
+-    def get_kwargs_value(self, arg_name, **kwargs):  # type: ignore[no-untyped-def]
++    def get_kwargs_value(self, arg_name: str, **kwargs):  # type: ignore[no-untyped-def]
+         """Given an argument name, queries for values in (in order):
+         1. any provided kwargs for this function.
+         2. the class self.kwargs member.
+@@ -6009,8 +6009,8 @@ class ExternKernelAlloc(ExternKernel):
+         layout,
+         inputs,
+         constant_args=(),
+-        kwargs=None,
+-        python_kernel_name=None,
++        kwargs: None=None,
++        python_kernel_name: None=None,
+         cpp_kernel_name=None,
+         ordered_kwargs_for_cpp_kernel=(),
+         op_overload=None,
+@@ -7550,7 +7550,7 @@ class MutableBox(IRNode):
+ 
+ class TensorBox(MutableBox):
+     @staticmethod
+-    def create(data):  # type: ignore[no-untyped-def]
++    def create(data: Loops | MultiOutputReduction | Reduction | Scan | Sort | SplitScan | WelfordReduction):  # type: ignore[no-untyped-def]
+         if isinstance(data, ShapeAsConstantBuffer):
+             return data
+         return TensorBox(StorageBox(data))
+@@ -7617,7 +7617,7 @@ class StorageBox(MutableBox):
+             or self.has_large_inner_fn()
+         )
+ 
+-    def should_realize_on_reuse(self, users):  # type: ignore[no-untyped-def]
++    def should_realize_on_reuse(self, users: int):  # type: ignore[no-untyped-def]
+         """
+         A heuristic to decide if we should realize a tensor
+         that is used multiple times.
