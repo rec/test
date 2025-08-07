@@ -4,22 +4,22 @@ import tokenize
 INDENT = '  '
 
 
-def indent_ds(s: str):
+def indent_dataclass_str(s: str):
     parts = []
-    indent = ''
+    indent = '\n'
     for t in tokenize.generate_tokens(iter(s.splitlines()).__next__):
-        parts.append(t.string)
-        if t.type != token.OP:
-            continue
-
-        if t.string in "([{":
-            indent += INDENT
-        elif t.string in ")]}":
+        if t.type == token.OP and t.string in ")]}":
             indent = indent[:-len(INDENT)]
-        elif t.string != ",":
-            continue
+            parts.append(indent)
 
-        parts.append(f"\n{indent}")
+        parts.append(t.string)
+
+        if t.type == token.OP:
+            if t.string in "([{":
+                indent += INDENT
+                parts.append(indent)
+            elif t.string == ",":
+                parts.append(indent)
 
     print(*parts)
 

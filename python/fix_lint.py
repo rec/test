@@ -1,6 +1,11 @@
 import fileinput
 import re
 
+"""
+Filter output of lintrunner and add line numbers for errors in classic
+`<line>:<colum>:<message>` format used by e.g. gcc and recognized by many editors
+"""
+
 START_OF_FILE = re.compile(r'>>>\s+Lint for (.*\.py):\s*')
 START_OF_ERROR = re.compile(r'\s*(Error|Warning) \([A-Z_]+\) .*')
 ERROR_LINE = re.compile(r'\s*>>>\s*(\d+)(\s*)\|.*')
