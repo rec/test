@@ -9,7 +9,7 @@ for (k, v) in hints.items():
 
     filter_list = [
         hint for hint in filter_list
-        if len(sk.intersection(hint)) == v[0] and
+        if len(sk & set(hint)) == v[0] and
         len(psk & positional_set(hint)) == v[1]
 ]
 
