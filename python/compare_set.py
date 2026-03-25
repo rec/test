@@ -9,4 +9,5 @@ for (k, v) in hints.items():
                      len(set(positional_set(k)).intersection(set(positional_set(hint)))) == v[1],
         filter_list
     ))
-print(filter_list)  # Output: ['394']
+assert filter_list == ['394'], filter_list
+print('ok')
