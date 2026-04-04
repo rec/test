@@ -1,18 +1,26 @@
-[fades]
-# Can be overridden in each `edit_point`
+[out]
+file_root = 'mix'
+# out.file_root is prepended to the longest common suffix in the filenames
+# Example: if the inputs are `1-2 + 160800.wav` and `3-4 + 160800.wav`,
+# and file_root = 'mix' then the output will be `mix + 160800.wav`.
 
-shape = 'linear'  # Choose from linear, log, logistic, sqrt, etc
-time = 1.0        # In seconds
-pin = 'middle'    # Choose from begin, middle, end
+# file_name = 'mix-160800.wav'
+# Or you can explicitly set the file_name.
+
+[fade]
+shape = 'linear'   # Choose from linear, log, logistic, sqrt, etc
+time = 1.0         # In seconds
+pin = 'middle'     # Choose from begin, middle, end
 
 [[edit_point]]
 time = 0
-mix = {'9': 1}    # Any track starting with 9 is at level 1, all else at level 0
+mix = {9 = 1}     # Any track starting with 9 is at level 1, all else at level 0
 
 [[edit_point]]
-time = "2:03.45"  # Just after two minutes. The number 123.45 also works.
-mix = {'3': 1, '5': 1, '7': 1}
+time = "2:03.45"   # Just after two minutes. The number 123.45 also works.
+mix = {3 = 1, 5 = 1, 7 = 1}
 
 [[edit_point]]
-time = 185.0      # The string "3:05" also works
-mix = {'9': 1}
+time = 185.0       # The string "3:05" also works
+mix = {9 = 1}
+fade = {shape = 'log', time=5}
