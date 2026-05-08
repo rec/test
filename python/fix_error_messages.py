@@ -14,6 +14,8 @@ def fix_error_messages():
         if m := MESSAGE_RE.search(line):
             file, message = m.groups()
             print(f"{file}: {message.strip()}")
+        elif not line:
+            break
         else:
             print(line.rstrip())
 
