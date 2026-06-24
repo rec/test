@@ -17,3 +17,18 @@ dev = [
     "ruff>=0.14.14",
     "ty>=0.0.14",
 ]
+
+[tool.poetry]
+name = "test"
+version = "0.1.0"
+description = ""
+authors = ["Tom Ritchford <tom@swirly.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.14"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
