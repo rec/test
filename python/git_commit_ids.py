@@ -1,5 +1,7 @@
 from bisect import bisect
-FILE = '/Users/tom/.git-commit-ids'
+from pathlib import Path
+
+FILE = Path(__file__).parent / 'git-commit-ids.txt'
 DAY = 60 * 60 * 24
 
 
@@ -18,7 +20,7 @@ def _print_times(time_ids):
 
 
 def _time_ids():
-    for i, line in enumerate(open(FILE)):
+    for i, line in enumerate(FILE.open()):
         try:
             id, time = line.split()
             yield time, id
