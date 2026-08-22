@@ -1,28 +1,33 @@
 from typing import Any, Callable
+from copy import deepcopy
 
 _NONE = object()
 
 
-class JsonL:
-    def __init__(self):
-        self._prev: dict[str, Any] = {'type': None}
-
-    def __call__(self, d: dict[str, Any]) -> dict[str, Any]:
-        res = self._call(d)
-        self._prev = d
-        return res
+class Jsonl:
+    def __init__(self) -> None:
+        self._types: dict[str, dict[str, Any]] = {}
 
     def _call(self, d: dict[str, Any]) -> dict[str, Any]:
         raise NotImplementedError
 
+    def __call__(self, it: Iterable[dict[str, Any]]) -> Iterator[dict[str, Any]]:
+        yield from (self._call(i) for i in it)
 
-class CompressJsonL(JsonL):
+
+class Decompress(Jsonl):
     def _call(self, d: dict[str, Any]) -> dict[str, Any]:
-        if self._prev['type'] != d['type']:
-            return d
-        return {k: v for k, v in d.items() if self._prev.get(k, _NONE) != v}
+        prev = self._types.setdefault(d['type'], {})
+        res = prev | d
+        prev.update(d)
+        return res
 
 
-class DecompressJsonL(JsonL):
+class Compress(Jsonl):
     def _call(self, d: dict[str, Any]) -> dict[str, Any]:
-        return d if 'type' in d else d | self._prev
+        prev = self._types.setdefault(d['type'], {})
+
+        def accept(k: str, v: Any) -> bool:
+            return k == 'type' or prev.get(k, _NONE) != v
+
+        return {k: v for k, v in b.items() if accept(k, v)}
