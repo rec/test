@@ -19,7 +19,7 @@ from pydantic import BaseModel
 
 
 class Options(BaseModel, frozen=True):
-    projects: list[Path]
+    projects: tyro.conf.Positional[list[Path]]
 
 
 class ImportComments(cst.CSTVisitor):

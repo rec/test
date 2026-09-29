@@ -4,7 +4,13 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from short_imports import run_checks, run_projects, shorten_imports
+import tyro
+from short_imports import Options, run_checks, run_projects, shorten_imports
+
+
+def test_projects_are_positional_arguments() -> None:
+    options = tyro.cli(Options, args=['/tmp/first', '/tmp/second'])
+    assert options.projects == [Path('/tmp/first'), Path('/tmp/second')]
 
 
 class ShortImportsTest(unittest.TestCase):
