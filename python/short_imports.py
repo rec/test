@@ -168,6 +168,7 @@ def run_projects(paths: list[Path], useful: bool = True, stash: bool = False) ->
     project_paths: list[Path] = []
     workspaces: list[Path] = []
     projects: dict[Path, list[str]] = {}
+    untracked_before: dict[Path, bytes] = {}
     for path in paths:
         if path.is_symlink() and not path.is_dir():
             sys.exit(f'Symlinks are not supported: {path}')
@@ -207,13 +208,16 @@ def run_projects(paths: list[Path], useful: bool = True, stash: bool = False) ->
 
     if stash:
         for project in workspaces:
-            if _git_output(project, 'status', '--porcelain', '-z'):
+            if _git_output(project, 'status', '--porcelain', '-uno', '-z'):
                 subprocess.run(['git', 'stash'], cwd=project, check=True)
 
     for project in project_paths:
         try:
-            if _git_output(project, 'status', '--porcelain', '-z'):
+            if _git_output(project, 'status', '--porcelain', '-uno', '-z'):
                 sys.exit(f'Project has existing changes: {project}')
+            untracked_before[project] = _git_output(
+                project, 'ls-files', '--others', '--exclude-standard', '-z'
+            )
             files = [
                 p.decode('utf-8', errors='surrogateescape')
                 for p in _git_output(project, 'ls-files', '-z', '--', '*.py').split(
@@ -272,7 +276,7 @@ def run_projects(paths: list[Path], useful: bool = True, stash: bool = False) ->
         )
         staged = _git_output(project, 'diff', '--cached', '--name-only', '-z')
         if (
-            untracked
+            untracked != untracked_before[project]
             or staged
             or any(
                 p not in projects[project] or not (project / p).is_file()

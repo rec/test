@@ -268,6 +268,9 @@ class ProjectTest(unittest.TestCase):
             (project / 'ignored.py').write_text(
                 'from one.two import (\n    a,\n)\nresult = a\n'
             )
+            (project / 'untracked.py').write_text(
+                'from one.two import (\n    a,\n)\nresult = a\n'
+            )
             self._git(project, 'add', '.gitignore', 'tracked.py')
             self._git(project, 'commit', '-qm', 'Initial')
 
@@ -279,9 +282,53 @@ class ProjectTest(unittest.TestCase):
                 'from one import two\nresult = two.a\n',
             )
             self.assertIn('from one.two import', (project / 'ignored.py').read_text())
+            self.assertIn('from one.two import', (project / 'untracked.py').read_text())
             self.assertEqual(
                 self._git(project, 'log', '-1', '--format=%s'), 'Shortened imports'
             )
+
+    def test_stash_does_not_block_on_preexisting_untracked_file(self) -> None:
+        with TemporaryDirectory() as directory:
+            project = Path(directory)
+            self._init_project(project)
+            (project / 'tracked.py').write_text(
+                'from one.two import (\n    a,\n)\nresult = a\n'
+            )
+            (project / 'untracked.txt').write_text('Existing user work\n')
+            self._git(project, 'add', 'tracked.py')
+            self._git(project, 'commit', '-qm', 'Initial')
+
+            with patch('short_imports.run_checks', return_value=[]):
+                run_projects([project], stash=True)
+
+            self.assertEqual(
+                (project / 'tracked.py').read_text(),
+                'from one import two\nresult = two.a\n',
+            )
+            self.assertEqual(
+                (project / 'untracked.txt').read_text(), 'Existing user work\n'
+            )
+            self.assertEqual(self._git(project, 'stash', 'list'), '')
+
+    def test_rejects_new_untracked_file_created_by_checks(self) -> None:
+        with TemporaryDirectory() as directory:
+            project = Path(directory)
+            self._init_project(project)
+            (project / 'tracked.py').write_text(
+                'from one.two import (\n    a,\n)\nresult = a\n'
+            )
+            self._git(project, 'add', 'tracked.py')
+            self._git(project, 'commit', '-qm', 'Initial')
+
+            def create_file(project: Path, files: list[str]) -> list[str]:
+                (project / 'new.txt').write_text('Created by checks\n')
+                return []
+
+            with patch('short_imports.run_checks', side_effect=create_file):
+                with self.assertRaises(SystemExit):
+                    run_projects([project])
+
+            self.assertEqual(self._git(project, 'log', '-1', '--format=%s'), 'Initial')
 
     def test_failed_checks_prevent_commits_in_all_projects(self) -> None:
         with TemporaryDirectory() as directory:
@@ -317,13 +364,13 @@ class ProjectTest(unittest.TestCase):
             (project / 'tracked.py').write_text(source)
             self._git(project, 'add', 'tracked.py')
             self._git(project, 'commit', '-qm', 'Initial')
-            (project / 'untracked.txt').write_text('Existing user work\n')
+            dirty = source + 'dirty = 1\n'
+            (project / 'tracked.py').write_text(dirty)
 
-            for stash in (False, True):
-                with self.assertRaises(SystemExit):
-                    run_projects([project], stash=stash)
+            with self.assertRaises(SystemExit):
+                run_projects([project])
 
-            self.assertEqual((project / 'tracked.py').read_text(), source)
+            self.assertEqual((project / 'tracked.py').read_text(), dirty)
             self.assertEqual(self._git(project, 'log', '-1', '--format=%s'), 'Initial')
             self.assertEqual(self._git(project, 'stash', 'list'), '')
 
