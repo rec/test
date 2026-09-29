@@ -21,6 +21,7 @@ from pydantic import BaseModel
 class Options(BaseModel, frozen=True):
     paths: tyro.conf.Positional[list[Path]]
     useful: bool = True
+    stash: bool = False
 
 
 class ImportComments(cst.CSTVisitor):
@@ -159,11 +160,13 @@ def shorten_file(path: Path, originals: dict[Path, bytes]) -> None:
         path.write_text(changed)
 
 
-def run_projects(paths: list[Path], useful: bool = True) -> None:
+def run_projects(paths: list[Path], useful: bool = True, stash: bool = False) -> None:
     if not paths:
         sys.exit('At least one project or Python file path is required')
 
     direct_files: list[Path] = []
+    project_paths: list[Path] = []
+    workspaces: list[Path] = []
     projects: dict[Path, list[str]] = {}
     for path in paths:
         if path.is_symlink() and not path.is_dir():
@@ -174,6 +177,18 @@ def run_projects(paths: list[Path], useful: bool = True) -> None:
                 sys.exit(f'Not a Python file: {target}')
             if target not in direct_files:
                 direct_files.append(target)
+            if stash:
+                try:
+                    root = Path(
+                        _git_output(target.parent, 'rev-parse', '--show-toplevel')
+                        .decode()
+                        .strip()
+                    )
+                except RuntimeError:
+                    pass
+                else:
+                    if root not in workspaces:
+                        workspaces.append(root)
             continue
         if not target.is_dir():
             sys.exit(f'Not a project directory or Python file: {target}')
@@ -183,7 +198,20 @@ def run_projects(paths: list[Path], useful: bool = True) -> None:
             )
             if root != target:
                 sys.exit(f'Pass the Git project root, not a subdirectory: {target}')
-            project = root
+        except (OSError, RuntimeError) as error:
+            sys.exit(str(error))
+        if root not in project_paths:
+            project_paths.append(root)
+        if stash and root not in workspaces:
+            workspaces.append(root)
+
+    if stash:
+        for project in workspaces:
+            if _git_output(project, 'status', '--porcelain', '-z'):
+                subprocess.run(['git', 'stash'], cwd=project, check=True)
+
+    for project in project_paths:
+        try:
             if _git_output(project, 'status', '--porcelain', '-z'):
                 sys.exit(f'Project has existing changes: {project}')
             files = [
@@ -306,7 +334,7 @@ def run_checks(project: Path, files: list[str]) -> list[str]:
 
 def main() -> None:
     options = tyro.cli(Options)
-    run_projects(options.paths, options.useful)
+    run_projects(options.paths, options.useful, options.stash)
 
 
 def _git_output(project: Path, *args: str) -> bytes:

@@ -12,7 +12,9 @@ def test_paths_are_positional_arguments() -> None:
     options = tyro.cli(Options, args=['/tmp/first', '/tmp/second'])
     assert options.paths == [Path('/tmp/first'), Path('/tmp/second')]
     assert options.useful is True
+    assert options.stash is False
     assert tyro.cli(Options, args=['/tmp/first', '--no-useful']).useful is False
+    assert tyro.cli(Options, args=['/tmp/first', '--stash']).stash is True
 
 
 class ShortImportsTest(unittest.TestCase):
@@ -100,6 +102,49 @@ def use():
 
 
 class ProjectTest(unittest.TestCase):
+    def test_stashes_dirty_project_before_processing(self) -> None:
+        with TemporaryDirectory() as directory:
+            project = Path(directory)
+            self._init_project(project)
+            path = project / 'tracked.py'
+            original = 'from one.two import (\n    a,\n)\nresult = a\n'
+            dirty = original + 'dirty = 1\n'
+            path.write_text(original)
+            self._git(project, 'add', 'tracked.py')
+            self._git(project, 'commit', '-qm', 'Initial')
+            path.write_text(dirty)
+
+            with patch('short_imports.run_checks', return_value=[]):
+                run_projects([project], stash=True)
+
+            self.assertEqual(path.read_text(), 'from one import two\nresult = two.a\n')
+            self.assertEqual(
+                self._git(project, 'show', 'stash@{0}:tracked.py'), dirty.strip()
+            )
+            self.assertEqual(
+                self._git(project, 'log', '-1', '--format=%s'), 'Shortened imports'
+            )
+
+    def test_stashes_dirty_file_workspace_before_processing(self) -> None:
+        with TemporaryDirectory() as directory:
+            project = Path(directory)
+            self._init_project(project)
+            path = project / 'tracked.py'
+            original = 'from one.two import (\n    a,\n)\nresult = a\n'
+            dirty = original + 'dirty = 1\n'
+            path.write_text(original)
+            self._git(project, 'add', 'tracked.py')
+            self._git(project, 'commit', '-qm', 'Initial')
+            path.write_text(dirty)
+
+            run_projects([path], stash=True)
+
+            self.assertEqual(path.read_text(), 'from one import two\nresult = two.a\n')
+            self.assertEqual(
+                self._git(project, 'show', 'stash@{0}:tracked.py'), dirty.strip()
+            )
+            self.assertEqual(self._git(project, 'log', '-1', '--format=%s'), 'Initial')
+
     def test_changes_tracked_and_untracked_files_without_checks_or_commit(
         self,
     ) -> None:
@@ -274,11 +319,13 @@ class ProjectTest(unittest.TestCase):
             self._git(project, 'commit', '-qm', 'Initial')
             (project / 'untracked.txt').write_text('Existing user work\n')
 
-            with self.assertRaises(SystemExit):
-                run_projects([project])
+            for stash in (False, True):
+                with self.assertRaises(SystemExit):
+                    run_projects([project], stash=stash)
 
             self.assertEqual((project / 'tracked.py').read_text(), source)
             self.assertEqual(self._git(project, 'log', '-1', '--format=%s'), 'Initial')
+            self.assertEqual(self._git(project, 'stash', 'list'), '')
 
     def test_runs_every_check_after_a_failure(self) -> None:
         with TemporaryDirectory() as directory:
