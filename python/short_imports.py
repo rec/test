@@ -1,4 +1,4 @@
-"""Shorten parenthesized, multiline imports in Git projects."""
+"""Shorten parenthesized, multiline imports in Git projects or Python files."""
 
 import re
 import shlex
@@ -19,7 +19,7 @@ from pydantic import BaseModel
 
 
 class Options(BaseModel, frozen=True):
-    projects: tyro.conf.Positional[list[Path]]
+    paths: tyro.conf.Positional[list[Path]]
 
 
 class ImportComments(cst.CSTVisitor):
@@ -151,19 +151,26 @@ def shorten_imports(source: str) -> str:
 
 def run_projects(paths: list[Path]) -> None:
     if not paths:
-        sys.exit('At least one project path is required')
+        sys.exit('At least one project or Python file path is required')
 
     projects: dict[Path, list[str]] = {}
     for path in paths:
-        project = path.resolve()
-        if not project.is_dir():
-            sys.exit(f'Not a project directory: {project}')
+        if path.is_symlink() and not path.is_dir():
+            sys.exit(f'Symlinks are not supported: {path}')
+        target = path.resolve()
+        is_file = target.is_file()
+        if is_file and target.suffix != '.py':
+            sys.exit(f'Not a Python file: {target}')
+        directory = target.parent if is_file else target
+        if not directory.is_dir():
+            sys.exit(f'Not a project directory or Python file: {target}')
         try:
             root = Path(
-                _git_output(project, 'rev-parse', '--show-toplevel').decode().strip()
+                _git_output(directory, 'rev-parse', '--show-toplevel').decode().strip()
             )
-            if root != project:
-                sys.exit(f'Pass the Git project root, not a subdirectory: {project}')
+            if not is_file and root != target:
+                sys.exit(f'Pass the Git project root, not a subdirectory: {target}')
+            project = root
             if _git_output(project, 'status', '--porcelain', '-z'):
                 sys.exit(f'Project has existing changes: {project}')
             files = [
@@ -177,11 +184,17 @@ def run_projects(paths: list[Path]) -> None:
             sys.exit(str(error))
         if not files:
             sys.exit(f'No tracked Python files: {project}')
+        if is_file:
+            name = target.relative_to(project).as_posix()
+            if name not in files:
+                sys.exit(f'Not a tracked Python file: {target}')
+            files = [name]
         if any(
             not (project / p).is_file() or (project / p).is_symlink() for p in files
         ):
             sys.exit(f'Tracked Python file is missing or a symlink: {project}')
-        projects[project] = files
+        selected = projects.setdefault(project, [])
+        selected.extend(p for p in files if p not in selected)
 
     failures: list[str] = []
     for project, files in projects.items():
@@ -213,7 +226,8 @@ def run_projects(paths: list[Path]) -> None:
             untracked
             or staged
             or any(
-                not p.endswith('.py') or not (project / p).is_file() for p in changed
+                p not in projects[project] or not (project / p).is_file()
+                for p in changed
             )
         ):
             failures.append(f'{project}: checks created unexpected files or changes')
@@ -271,7 +285,7 @@ def run_checks(project: Path, files: list[str]) -> list[str]:
 
 
 def main() -> None:
-    run_projects(tyro.cli(Options).projects)
+    run_projects(tyro.cli(Options).paths)
 
 
 def _git_output(project: Path, *args: str) -> bytes:

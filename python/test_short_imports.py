@@ -8,9 +8,9 @@ import tyro
 from short_imports import Options, run_checks, run_projects, shorten_imports
 
 
-def test_projects_are_positional_arguments() -> None:
+def test_paths_are_positional_arguments() -> None:
     options = tyro.cli(Options, args=['/tmp/first', '/tmp/second'])
-    assert options.projects == [Path('/tmp/first'), Path('/tmp/second')]
+    assert options.paths == [Path('/tmp/first'), Path('/tmp/second')]
 
 
 class ShortImportsTest(unittest.TestCase):
@@ -98,6 +98,52 @@ def use():
 
 
 class ProjectTest(unittest.TestCase):
+    def test_commits_only_selected_python_file(self) -> None:
+        with TemporaryDirectory() as directory:
+            project = Path(directory)
+            self._init_project(project)
+            (project / 'package').mkdir()
+            selected = project / 'package' / 'selected.py'
+            other = project / 'other.py'
+            source = 'from one.two import (\n    a,\n)\nresult = a\n'
+            selected.write_text(source)
+            other.write_text(source)
+            self._git(project, 'add', 'package/selected.py', 'other.py')
+            self._git(project, 'commit', '-qm', 'Initial')
+
+            with patch('short_imports.run_checks', return_value=[]) as checks:
+                run_projects([selected])
+
+            checks.assert_called_once_with(project.resolve(), ['package/selected.py'])
+            self.assertEqual(
+                selected.read_text(), 'from one import two\nresult = two.a\n'
+            )
+            self.assertEqual(other.read_text(), source)
+            self.assertEqual(
+                self._git(project, 'show', '--format=', '--name-only', 'HEAD'),
+                'package/selected.py',
+            )
+
+    def test_project_argument_includes_all_files_after_file_argument(self) -> None:
+        with TemporaryDirectory() as directory:
+            project = Path(directory)
+            self._init_project(project)
+            source = 'from one.two import (\n    a,\n)\nresult = a\n'
+            for name in ('first.py', 'second.py'):
+                (project / name).write_text(source)
+            self._git(project, 'add', 'first.py', 'second.py')
+            self._git(project, 'commit', '-qm', 'Initial')
+
+            with patch('short_imports.run_checks', return_value=[]) as checks:
+                run_projects([project / 'first.py', project])
+
+            checks.assert_called_once_with(project.resolve(), ['first.py', 'second.py'])
+            for name in ('first.py', 'second.py'):
+                self.assertEqual(
+                    (project / name).read_text(),
+                    'from one import two\nresult = two.a\n',
+                )
+
     def test_commits_only_tracked_python_files_after_checks_pass(self) -> None:
         with TemporaryDirectory() as directory:
             project = Path(directory)
