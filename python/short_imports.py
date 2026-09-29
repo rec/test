@@ -289,7 +289,6 @@ def run_checks(project: Path, files: list[str]) -> list[str]:
                 [bin_dir / 'ruff', 'check', '--fix', '--select', 'B,E,F,I', *files],
             ),
             ('pytest', [bin_dir / 'pytest']),
-            ('ty', [bin_dir / 'ty', 'check', '.']),
             ('git diff --check', ['git', 'diff', '--check']),
         ]
     )

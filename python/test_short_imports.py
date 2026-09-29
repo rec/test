@@ -288,8 +288,8 @@ class ProjectTest(unittest.TestCase):
             with patch('short_imports.subprocess.run', return_value=result) as run:
                 failures = run_checks(project, ['tracked.py'])
 
-            self.assertEqual(run.call_count, 6)
-            self.assertEqual(len(failures), 6)
+            self.assertEqual(run.call_count, 5)
+            self.assertEqual(len(failures), 5)
             commands = [call.args[0] for call in run.call_args_list]
             self.assertIn('format', commands[1])
             self.assertIn('--fix', commands[2])
