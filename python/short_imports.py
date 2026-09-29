@@ -149,26 +149,36 @@ def shorten_imports(source: str) -> str:
     return wrapper.module.visit(ShortenImports(imports, references)).code
 
 
+def shorten_file(path: Path) -> None:
+    original = path.read_text()
+    changed = shorten_imports(original)
+    if changed != original:
+        path.write_text(changed)
+
+
 def run_projects(paths: list[Path]) -> None:
     if not paths:
         sys.exit('At least one project or Python file path is required')
 
+    direct_files: list[Path] = []
     projects: dict[Path, list[str]] = {}
     for path in paths:
         if path.is_symlink() and not path.is_dir():
             sys.exit(f'Symlinks are not supported: {path}')
         target = path.resolve()
-        is_file = target.is_file()
-        if is_file and target.suffix != '.py':
-            sys.exit(f'Not a Python file: {target}')
-        directory = target.parent if is_file else target
-        if not directory.is_dir():
+        if target.is_file():
+            if target.suffix != '.py':
+                sys.exit(f'Not a Python file: {target}')
+            if target not in direct_files:
+                direct_files.append(target)
+            continue
+        if not target.is_dir():
             sys.exit(f'Not a project directory or Python file: {target}')
         try:
             root = Path(
-                _git_output(directory, 'rev-parse', '--show-toplevel').decode().strip()
+                _git_output(target, 'rev-parse', '--show-toplevel').decode().strip()
             )
-            if not is_file and root != target:
+            if root != target:
                 sys.exit(f'Pass the Git project root, not a subdirectory: {target}')
             project = root
             if _git_output(project, 'status', '--porcelain', '-z'):
@@ -184,27 +194,23 @@ def run_projects(paths: list[Path]) -> None:
             sys.exit(str(error))
         if not files:
             sys.exit(f'No tracked Python files: {project}')
-        if is_file:
-            name = target.relative_to(project).as_posix()
-            if name not in files:
-                sys.exit(f'Not a tracked Python file: {target}')
-            files = [name]
         if any(
             not (project / p).is_file() or (project / p).is_symlink() for p in files
         ):
             sys.exit(f'Tracked Python file is missing or a symlink: {project}')
-        selected = projects.setdefault(project, [])
-        selected.extend(p for p in files if p not in selected)
+        projects[project] = files
 
     failures: list[str] = []
+    for path in direct_files:
+        try:
+            shorten_file(path)
+        except (OSError, UnicodeError, cst.ParserSyntaxError) as error:
+            failures.append(f'{path}: {error}')
     for project, files in projects.items():
         for name in files:
             path = project / name
             try:
-                original = path.read_text()
-                changed = shorten_imports(original)
-                if changed != original:
-                    path.write_text(changed)
+                shorten_file(path)
             except (OSError, UnicodeError, cst.ParserSyntaxError) as error:
                 failures.append(f'{path}: {error}')
         failures.extend(run_checks(project, files))

@@ -98,31 +98,42 @@ def use():
 
 
 class ProjectTest(unittest.TestCase):
-    def test_commits_only_selected_python_file(self) -> None:
+    def test_changes_tracked_and_untracked_files_without_checks_or_commit(
+        self,
+    ) -> None:
         with TemporaryDirectory() as directory:
             project = Path(directory)
             self._init_project(project)
             (project / 'package').mkdir()
             selected = project / 'package' / 'selected.py'
+            tracked = project / 'tracked.py'
             other = project / 'other.py'
             source = 'from one.two import (\n    a,\n)\nresult = a\n'
             selected.write_text(source)
+            tracked.write_text(source)
             other.write_text(source)
-            self._git(project, 'add', 'package/selected.py', 'other.py')
+            self._git(project, 'add', 'tracked.py', 'other.py')
             self._git(project, 'commit', '-qm', 'Initial')
 
             with patch('short_imports.run_checks', return_value=[]) as checks:
-                run_projects([selected])
+                run_projects([selected, tracked])
 
-            checks.assert_called_once_with(project.resolve(), ['package/selected.py'])
-            self.assertEqual(
-                selected.read_text(), 'from one import two\nresult = two.a\n'
-            )
+            checks.assert_not_called()
+            for path in (selected, tracked):
+                self.assertEqual(
+                    path.read_text(), 'from one import two\nresult = two.a\n'
+                )
             self.assertEqual(other.read_text(), source)
-            self.assertEqual(
-                self._git(project, 'show', '--format=', '--name-only', 'HEAD'),
-                'package/selected.py',
-            )
+            self.assertEqual(self._git(project, 'log', '-1', '--format=%s'), 'Initial')
+
+    def test_changes_python_file_outside_git(self) -> None:
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / 'standalone.py'
+            path.write_text('from one.two import (\n    a,\n)\nresult = a\n')
+
+            run_projects([path])
+
+            self.assertEqual(path.read_text(), 'from one import two\nresult = two.a\n')
 
     def test_project_argument_includes_all_files_after_file_argument(self) -> None:
         with TemporaryDirectory() as directory:
