@@ -1,6 +1,9 @@
-"""Shorten parenthesized, multiline imports of names from a child module."""
+"""Shorten parenthesized, multiline imports in Git projects."""
 
-from difflib import unified_diff
+import re
+import shlex
+import subprocess
+import sys
 from pathlib import Path
 
 import libcst as cst
@@ -16,8 +19,7 @@ from pydantic import BaseModel
 
 
 class Options(BaseModel, frozen=True):
-    path: Path
-    write: bool = False
+    projects: list[Path]
 
 
 class ImportComments(cst.CSTVisitor):
@@ -147,25 +149,158 @@ def shorten_imports(source: str) -> str:
     return wrapper.module.visit(ShortenImports(imports, references)).code
 
 
-def main() -> None:
-    options = tyro.cli(Options)
-    original = options.path.read_text()
-    changed = shorten_imports(original)
-    if options.write:
-        if changed != original:
-            options.path.write_text(changed)
-    else:
-        print(
-            ''.join(
-                unified_diff(
-                    original.splitlines(keepends=True),
-                    changed.splitlines(keepends=True),
-                    fromfile=str(options.path),
-                    tofile=str(options.path),
+def run_projects(paths: list[Path]) -> None:
+    if not paths:
+        sys.exit('At least one project path is required')
+
+    projects: dict[Path, list[str]] = {}
+    for path in paths:
+        project = path.resolve()
+        if not project.is_dir():
+            sys.exit(f'Not a project directory: {project}')
+        try:
+            root = Path(
+                _git_output(project, 'rev-parse', '--show-toplevel').decode().strip()
+            )
+            if root != project:
+                sys.exit(f'Pass the Git project root, not a subdirectory: {project}')
+            if _git_output(project, 'status', '--porcelain', '-z'):
+                sys.exit(f'Project has existing changes: {project}')
+            files = [
+                p.decode('utf-8', errors='surrogateescape')
+                for p in _git_output(project, 'ls-files', '-z', '--', '*.py').split(
+                    b'\0'
                 )
-            ),
-            end='',
+                if p
+            ]
+        except (OSError, RuntimeError) as error:
+            sys.exit(str(error))
+        if not files:
+            sys.exit(f'No tracked Python files: {project}')
+        if any(
+            not (project / p).is_file() or (project / p).is_symlink() for p in files
+        ):
+            sys.exit(f'Tracked Python file is missing or a symlink: {project}')
+        projects[project] = files
+
+    failures: list[str] = []
+    for project, files in projects.items():
+        for name in files:
+            path = project / name
+            try:
+                original = path.read_text()
+                changed = shorten_imports(original)
+                if changed != original:
+                    path.write_text(changed)
+            except (OSError, UnicodeError, cst.ParserSyntaxError) as error:
+                failures.append(f'{path}: {error}')
+        failures.extend(run_checks(project, files))
+
+    if failures:
+        sys.exit('No commits made. Failures:\n' + '\n'.join(failures))
+
+    for project in projects:
+        changed = [
+            p.decode('utf-8', errors='surrogateescape')
+            for p in _git_output(project, 'diff', '--name-only', '-z').split(b'\0')
+            if p
+        ]
+        untracked = _git_output(
+            project, 'ls-files', '--others', '--exclude-standard', '-z'
         )
+        staged = _git_output(project, 'diff', '--cached', '--name-only', '-z')
+        if (
+            untracked
+            or staged
+            or any(
+                not p.endswith('.py') or not (project / p).is_file() for p in changed
+            )
+        ):
+            failures.append(f'{project}: checks created unexpected files or changes')
+        projects[project] = changed
+
+    if failures:
+        sys.exit('No commits made. Failures:\n' + '\n'.join(failures))
+
+    for project, changed in projects.items():
+        if not changed:
+            print(f'{project}: no changes')
+            continue
+        subprocess.run(['git', 'add', '--', *changed], cwd=project, check=True)
+        subprocess.run(
+            ['git', 'commit', '-m', 'Shortened imports'], cwd=project, check=True
+        )
+
+
+def run_checks(project: Path, files: list[str]) -> list[str]:
+    bin_dir = project / '.venv/bin'
+    failures: list[str] = []
+    try:
+        version = _python_version(project)
+    except (OSError, RuntimeError, ValueError) as error:
+        failures.append(f'{project}: pyupgrade: {error}')
+        version = None
+
+    checks = []
+    if version is not None:
+        checks.append(
+            ('pyupgrade', [bin_dir / 'pyupgrade', f'--py{version}-plus', *files])
+        )
+    checks.extend(
+        [
+            (
+                'ruff check',
+                [bin_dir / 'ruff', 'check', '--fix', '--select', 'B,E,F,I', *files],
+            ),
+            ('ruff format', [bin_dir / 'ruff', 'format', *files]),
+            ('pytest', [bin_dir / 'pytest']),
+            ('ty', [bin_dir / 'ty', 'check', '.']),
+            ('git diff --check', ['git', 'diff', '--check']),
+        ]
+    )
+    for label, command in checks:
+        print(f'{project}: {shlex.join(str(a) for a in command)}', flush=True)
+        try:
+            result = subprocess.run(command, cwd=project, check=False)
+        except OSError as error:
+            failures.append(f'{project}: {label}: {error}')
+            continue
+        if result.returncode:
+            failures.append(f'{project}: {label} exited {result.returncode}')
+    return failures
+
+
+def main() -> None:
+    run_projects(tyro.cli(Options).projects)
+
+
+def _git_output(project: Path, *args: str) -> bytes:
+    result = subprocess.run(
+        ['git', *args], cwd=project, capture_output=True, check=False
+    )
+    if result.returncode:
+        raise RuntimeError(result.stderr.decode(errors='replace').strip())
+    return result.stdout
+
+
+def _python_version(project: Path) -> str:
+    version_file = project / '.python-version'
+    if version_file.is_file():
+        version = version_file.read_text().strip()
+    else:
+        result = subprocess.run(
+            [project / '.venv/bin/python', '--version'],
+            cwd=project,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode:
+            raise RuntimeError(result.stderr.strip() or 'venv Python failed')
+        version = result.stdout.removeprefix('Python ').strip()
+    if (match := re.fullmatch(r'(\d+)\.(\d+)(?:\.\d+)?', version)) is None:
+        raise ValueError(f'Invalid Python version: {version}')
+    return ''.join(match.groups())
 
 
 if __name__ == '__main__':

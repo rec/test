@@ -1,6 +1,10 @@
+import subprocess
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
-from short_imports import shorten_imports
+from short_imports import run_checks, run_projects, shorten_imports
 
 
 class ShortImportsTest(unittest.TestCase):
@@ -85,6 +89,101 @@ def use():
     return a(b)
 """
         self.assertEqual(shorten_imports(source), source)
+
+
+class ProjectTest(unittest.TestCase):
+    def test_commits_only_tracked_python_files_after_checks_pass(self) -> None:
+        with TemporaryDirectory() as directory:
+            project = Path(directory)
+            self._init_project(project)
+            (project / '.gitignore').write_text('ignored.py\n')
+            (project / 'tracked.py').write_text(
+                'from one.two import (\n    a,\n)\nresult = a\n'
+            )
+            (project / 'ignored.py').write_text(
+                'from one.two import (\n    a,\n)\nresult = a\n'
+            )
+            self._git(project, 'add', '.gitignore', 'tracked.py')
+            self._git(project, 'commit', '-qm', 'Initial')
+
+            with patch('short_imports.run_checks', return_value=[]):
+                run_projects([project])
+
+            self.assertEqual(
+                (project / 'tracked.py').read_text(),
+                'from one import two\nresult = two.a\n',
+            )
+            self.assertIn('from one.two import', (project / 'ignored.py').read_text())
+            self.assertEqual(
+                self._git(project, 'log', '-1', '--format=%s'), 'Shortened imports'
+            )
+
+    def test_failed_checks_prevent_commits_in_all_projects(self) -> None:
+        with TemporaryDirectory() as directory:
+            projects = [Path(directory) / name for name in ('first', 'second')]
+            for project in projects:
+                project.mkdir()
+                self._init_project(project)
+                (project / 'tracked.py').write_text(
+                    'from one.two import (\n    a,\n)\nresult = a\n'
+                )
+                self._git(project, 'add', 'tracked.py')
+                self._git(project, 'commit', '-qm', 'Initial')
+
+            with patch(
+                'short_imports.run_checks', side_effect=[[], ['pytest exited 1']]
+            ):
+                with self.assertRaises(SystemExit):
+                    run_projects(projects)
+
+            for project in projects:
+                self.assertEqual(
+                    self._git(project, 'log', '-1', '--format=%s'), 'Initial'
+                )
+                self.assertIn(
+                    'from one import two', (project / 'tracked.py').read_text()
+                )
+
+    def test_rejects_dirty_project_before_rewriting(self) -> None:
+        with TemporaryDirectory() as directory:
+            project = Path(directory)
+            self._init_project(project)
+            source = 'from one.two import (\n    a,\n)\nresult = a\n'
+            (project / 'tracked.py').write_text(source)
+            self._git(project, 'add', 'tracked.py')
+            self._git(project, 'commit', '-qm', 'Initial')
+            (project / 'untracked.txt').write_text('Existing user work\n')
+
+            with self.assertRaises(SystemExit):
+                run_projects([project])
+
+            self.assertEqual((project / 'tracked.py').read_text(), source)
+            self.assertEqual(self._git(project, 'log', '-1', '--format=%s'), 'Initial')
+
+    def test_runs_every_check_after_a_failure(self) -> None:
+        with TemporaryDirectory() as directory:
+            project = Path(directory)
+            (project / '.python-version').write_text('3.10\n')
+            result = subprocess.CompletedProcess([], 1)
+            with patch('short_imports.subprocess.run', return_value=result) as run:
+                failures = run_checks(project, ['tracked.py'])
+
+            self.assertEqual(run.call_count, 6)
+            self.assertEqual(len(failures), 6)
+            commands = [call.args[0] for call in run.call_args_list]
+            self.assertIn('--fix', commands[1])
+            self.assertIn('format', commands[2])
+            self.assertIn('pytest', str(commands[3][0]))
+
+    def _init_project(self, project: Path) -> None:
+        self._git(project, 'init', '-q')
+        self._git(project, 'config', 'user.name', 'Test')
+        self._git(project, 'config', 'user.email', 'test@example.com')
+
+    def _git(self, project: Path, *args: str) -> str:
+        return subprocess.run(
+            ['git', *args], cwd=project, capture_output=True, text=True, check=True
+        ).stdout.strip()
 
 
 if __name__ == '__main__':
