@@ -20,6 +20,7 @@ from pydantic import BaseModel
 
 class Options(BaseModel, frozen=True):
     paths: tyro.conf.Positional[list[Path]]
+    useful: bool = True
 
 
 class ImportComments(cst.CSTVisitor):
@@ -149,14 +150,16 @@ def shorten_imports(source: str) -> str:
     return wrapper.module.visit(ShortenImports(imports, references)).code
 
 
-def shorten_file(path: Path) -> None:
-    original = path.read_text()
-    changed = shorten_imports(original)
-    if changed != original:
+def shorten_file(path: Path, originals: dict[Path, bytes]) -> None:
+    original = path.read_bytes()
+    originals.setdefault(path, original)
+    source = original.decode()
+    changed = shorten_imports(source)
+    if changed != source:
         path.write_text(changed)
 
 
-def run_projects(paths: list[Path]) -> None:
+def run_projects(paths: list[Path], useful: bool = True) -> None:
     if not paths:
         sys.exit('At least one project or Python file path is required')
 
@@ -201,19 +204,31 @@ def run_projects(paths: list[Path]) -> None:
         projects[project] = files
 
     failures: list[str] = []
+    originals: dict[Path, bytes] = {}
     for path in direct_files:
         try:
-            shorten_file(path)
+            shorten_file(path, originals)
         except (OSError, UnicodeError, cst.ParserSyntaxError) as error:
             failures.append(f'{path}: {error}')
     for project, files in projects.items():
         for name in files:
             path = project / name
             try:
-                shorten_file(path)
+                shorten_file(path, originals)
             except (OSError, UnicodeError, cst.ParserSyntaxError) as error:
                 failures.append(f'{path}: {error}')
         failures.extend(run_checks(project, files))
+
+    if useful:
+        for path, original in originals.items():
+            try:
+                current = path.read_bytes()
+                if current != original and len(current.splitlines()) >= len(
+                    original.splitlines()
+                ):
+                    path.write_bytes(original)
+            except OSError as error:
+                failures.append(f'{path}: {error}')
 
     if failures:
         sys.exit('No commits made. Failures:\n' + '\n'.join(failures))
@@ -291,7 +306,8 @@ def run_checks(project: Path, files: list[str]) -> list[str]:
 
 
 def main() -> None:
-    run_projects(tyro.cli(Options).paths)
+    options = tyro.cli(Options)
+    run_projects(options.paths, options.useful)
 
 
 def _git_output(project: Path, *args: str) -> bytes:

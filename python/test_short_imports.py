@@ -11,6 +11,8 @@ from short_imports import Options, run_checks, run_projects, shorten_imports
 def test_paths_are_positional_arguments() -> None:
     options = tyro.cli(Options, args=['/tmp/first', '/tmp/second'])
     assert options.paths == [Path('/tmp/first'), Path('/tmp/second')]
+    assert options.useful is True
+    assert tyro.cli(Options, args=['/tmp/first', '--no-useful']).useful is False
 
 
 class ShortImportsTest(unittest.TestCase):
@@ -134,6 +136,61 @@ class ProjectTest(unittest.TestCase):
             run_projects([path])
 
             self.assertEqual(path.read_text(), 'from one import two\nresult = two.a\n')
+
+    def test_restores_standalone_file_when_line_count_does_not_decrease(self) -> None:
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / 'standalone.py'
+            original = b'result = a\r\n'
+            path.write_bytes(original)
+
+            with patch(
+                'short_imports.shorten_imports', return_value='result = two.a\n'
+            ):
+                run_projects([path])
+
+            self.assertEqual(path.read_bytes(), original)
+
+    def test_commits_only_files_that_remain_shorter_after_checks(self) -> None:
+        with TemporaryDirectory() as directory:
+            project = Path(directory)
+            self._init_project(project)
+            source = 'from one.two import (\n    a,\n)\nresult = a\n'
+            for name in ('useful.py', 'not_useful.py'):
+                (project / name).write_text(source)
+            self._git(project, 'add', 'useful.py', 'not_useful.py')
+            self._git(project, 'commit', '-qm', 'Initial')
+
+            def add_lines(project: Path, files: list[str]) -> list[str]:
+                path = project / 'not_useful.py'
+                path.write_text(path.read_text() + 'padding = 1\npadding2 = 2\n')
+                return []
+
+            with patch('short_imports.run_checks', side_effect=add_lines):
+                run_projects([project])
+
+            self.assertEqual((project / 'not_useful.py').read_text(), source)
+            self.assertEqual(
+                (project / 'useful.py').read_text(),
+                'from one import two\nresult = two.a\n',
+            )
+            self.assertEqual(
+                self._git(project, 'show', '--format=', '--name-only', 'HEAD'),
+                'useful.py',
+            )
+
+    def test_no_useful_keeps_file_even_when_line_count_does_not_decrease(
+        self,
+    ) -> None:
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / 'standalone.py'
+            path.write_text('result = a\n')
+
+            with patch(
+                'short_imports.shorten_imports', return_value='result = two.a\n'
+            ):
+                run_projects([path], useful=False)
+
+            self.assertEqual(path.read_text(), 'result = two.a\n')
 
     def test_project_argument_includes_all_files_after_file_argument(self) -> None:
         with TemporaryDirectory() as directory:
