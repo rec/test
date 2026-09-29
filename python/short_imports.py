@@ -251,7 +251,8 @@ def run_projects(paths: list[Path], useful: bool = True, stash: bool = False) ->
                 shorten_file(path, originals)
             except (OSError, UnicodeError, cst.ParserSyntaxError) as error:
                 failures.append(f'{path}: {error}')
-        failures.extend(run_checks(project, files))
+        if _git_output(project, 'diff', '--name-only', '-z', '--', *files):
+            failures.extend(run_checks(project, files))
 
     if useful:
         for path, original in originals.items():

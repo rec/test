@@ -121,6 +121,47 @@ def use():
 
 
 class ProjectTest(unittest.TestCase):
+    def test_skips_checks_and_commit_when_project_files_are_unchanged(self) -> None:
+        with TemporaryDirectory() as directory:
+            project = Path(directory)
+            self._init_project(project)
+            (project / 'tracked.py').write_text('value = 1\n')
+            self._git(project, 'add', 'tracked.py')
+            self._git(project, 'commit', '-qm', 'Initial')
+
+            with patch('short_imports.run_checks') as checks:
+                run_projects([project])
+
+            checks.assert_not_called()
+            self.assertEqual(self._git(project, 'log', '-1', '--format=%s'), 'Initial')
+            self.assertEqual(self._git(project, 'status', '--porcelain'), '')
+
+    def test_checks_only_project_with_changed_files(self) -> None:
+        with TemporaryDirectory() as directory:
+            projects = [Path(directory) / name for name in ('unchanged', 'changed')]
+            for project in projects:
+                project.mkdir()
+                self._init_project(project)
+            (projects[0] / 'tracked.py').write_text('value = 1\n')
+            (projects[1] / 'tracked.py').write_text(
+                'from one.two import (\n    a,\n)\nresult = a\n'
+            )
+            for project in projects:
+                self._git(project, 'add', 'tracked.py')
+                self._git(project, 'commit', '-qm', 'Initial')
+
+            with patch('short_imports.run_checks', return_value=[]) as checks:
+                run_projects(projects)
+
+            checks.assert_called_once_with(projects[1].resolve(), ['tracked.py'])
+            self.assertEqual(
+                self._git(projects[0], 'log', '-1', '--format=%s'), 'Initial'
+            )
+            self.assertEqual(
+                self._git(projects[1], 'log', '-1', '--format=%s'),
+                'Shortened imports',
+            )
+
     def test_stashes_dirty_project_before_processing(self) -> None:
         with TemporaryDirectory() as directory:
             project = Path(directory)
