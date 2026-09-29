@@ -57,6 +57,25 @@ result = two.c
 """
         self.assertEqual(shorten_imports(source), expected)
 
+    def test_skips_single_component_absolute_import(self) -> None:
+        source = """from one import (
+    a,
+)
+result = a
+"""
+        self.assertEqual(shorten_imports(source), source)
+
+    def test_rewrites_single_component_relative_import(self) -> None:
+        source = """from .one import (
+    a,
+)
+result = a
+"""
+        expected = """from . import one
+result = one.a
+"""
+        self.assertEqual(shorten_imports(source), expected)
+
     def test_skips_import_when_new_module_name_conflicts(self) -> None:
         source = """two = object()
 from one.two import (

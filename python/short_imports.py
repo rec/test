@@ -104,6 +104,8 @@ def shorten_imports(source: str) -> str:
                 continue
             if (name := get_full_name_for_node(node.module)) is not None:
                 parent, _, module = name.rpartition('.')
+                if not parent and not node.relative:
+                    continue
                 candidates[node] = (parent or None, module)
                 modules.setdefault(module, set()).add(node)
     imports: dict[cst.ImportFrom, tuple[str | None, str]] = {}
