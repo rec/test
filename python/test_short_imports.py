@@ -177,8 +177,8 @@ class ProjectTest(unittest.TestCase):
             self.assertEqual(run.call_count, 6)
             self.assertEqual(len(failures), 6)
             commands = [call.args[0] for call in run.call_args_list]
-            self.assertIn('--fix', commands[1])
-            self.assertIn('format', commands[2])
+            self.assertIn('format', commands[1])
+            self.assertIn('--fix', commands[2])
             self.assertIn('pytest', str(commands[3][0]))
 
     def _init_project(self, project: Path) -> None:

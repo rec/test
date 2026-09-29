@@ -248,11 +248,11 @@ def run_checks(project: Path, files: list[str]) -> list[str]:
         )
     checks.extend(
         [
+            ('ruff format', [bin_dir / 'ruff', 'format', *files]),
             (
                 'ruff check',
                 [bin_dir / 'ruff', 'check', '--fix', '--select', 'B,E,F,I', *files],
             ),
-            ('ruff format', [bin_dir / 'ruff', 'format', *files]),
             ('pytest', [bin_dir / 'pytest']),
             ('ty', [bin_dir / 'ty', 'check', '.']),
             ('git diff --check', ['git', 'diff', '--check']),
